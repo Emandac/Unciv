@@ -1,3 +1,105 @@
+## 4.17.1
+
+CPU performance improvements
+
+Fixed dev console requiring scrolling on small UI settings
+
+By SomeTroglodyte: 
+- Fix console `tile find` for quoted input or filters, requiring correct uppercase 
+- Fix mod checker not offering to auto-update Uniques for extension mods 
+- Speed and Difficulty uniques treated as part of GlobalUniques
+
+Make Machu Picchu and Neuschwanstein need a non-Natural Wonder mountain - By SpacedOutChicken
+
+Fix display for mod names with dashes in them - By RobLoach
+
+## 4.17.0
+
+AI considers tile damage when deciding on which tile to heal on
+
+Fixed building maintenance unique
+
+By SomeTroglodyte:
+- Improve ModChecker UI 
+- Allow mods with no global uniques, no ruins or no difficulties file
+
+AI: better handling of improvement-buildings - By EmperorPinguin
+
+## 4.16.19
+
+AI performance optimization
+
+By RobLoach:
+- Fix number popup with commas in the number 
+- Add `Gain control over [positiveAmount] tiles [cityFilter]` Triggerable 
+
+AI: update getStatDifferenceFromBuilding - By EmperorPinguin
+
+Improve ruleset validator - By SomeTroglodyte
+
+## 4.16.18
+
+Sprites do not change to base color when moving
+
+Barbarian workers no longer construct improvements
+
+modding: Allowed stat reserve to get happiness
+
+console: Can set game turn
+
+modding validation: Catch empty altases.json file
+
+Add `[relativeAmount]% [resourceFilter] resource production` Unique - By RobLoach
+
+Refactor RulesetValidator into two files - By SomeTroglodyte
+
+Fix broken chart in victory status - By metablaster
+
+Edge restructure update - By hackedpassword
+
+## 4.16.17
+
+Increased font size so it looks less blurry on large screens
+
+'connect road' works when railroads don't exist in the ruleset
+
+'connect road' acknowledges availability uniques on road/railroad
+
+Simplified requirements for adding a new demand
+
+By EmperorPinguin:
+- Autoplay: don't assign citizens according to AI Personality 
+- AI: remove thingsToFocusOnForVictory 
+
+## 4.16.16
+
+By metablaster:
+- update missing world screen image annotation 
+- Table and colors for diplomatic relations between human players in diplomacy screen. 
+- Fix automated units not auto upgrading when enabled
+- Fix broken translations 
+
+By RobLoach:
+- Allow using `[relativeAmount]% Gold from Great Merchant trade missions` on units 
+- Fix Civilopedia "required Building" links for Wonders 
+
+"Stacked with unit" conditional unique - By PLynx01
+
+Hexarealm edge tiles restructuring - by hackedpassword
+
+## 4.16.15
+
+Fixed Gold being translated in trade offer with peace treaty
+
+By metablaster:
+- Improved diagram colors in global politics 
+- Fix crash for automated Fighter units 
+- Fix automated long range units not heading to enemy city
+
+modding: Show status page for civilian units - By SomeTroglodyte
+
+Add "don't spy on us" has a demand - By Emandac
+
 ## 4.16.14
 
 Mod checking: Catch unexpected validation exceptions 
