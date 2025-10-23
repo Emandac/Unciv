@@ -1,3 +1,40 @@
+## 4.18.9
+
+Updated Libgdx to 1.14.0 - solving Wayand and Android bugs
+
+Fix super-rare bug on bringing in allies when declaring war
+
+Fix Leader Titles when with a suffixing title - By RobLoach
+
+By SomeTroglodyte: 
+- Selecting local mods without preview will now display an avatar 
+- Workaround for certain rare Java Runtime quirks (construction queue crash) 
+
+## 4.18.8
+
+Remove building-improvement if the building is no longer buildable
+
+By RobLoach:
+- Add 'when not stacked with a [mapUnitFilter] unit' Conditional 
+- Fix relevent Civ for within tiles Conditional 
+- City Screen: Display Stockpile Amount Available for Cost 
+
+Display promises in diplomacy overview for human players - By unciv-loof
+
+Fix battle notification translations - by dadadnet (new contributor!)
+
+## 4.18.7
+
+Improve Civilopedia display of GlobalUniques - By SomeTroglodyte
+
+Naval Tradition Policy under Commerce as per Civ V - By JhandeFlores
+
+By RobLoach:
+- Fix Ancient Ruins when there are conditionals 
+- Add Leader Titles unique 
+
+Modding/Feature: Allow units to destroy cities instead of capturing - By PhiRite
+
 ## 4.18.6
 
 Game startup performance improvements
