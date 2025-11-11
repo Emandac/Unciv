@@ -7,6 +7,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.scenes.scene2d.utils.Layout
 import com.badlogic.gdx.utils.Align
+import com.unciv.logic.GameInfo
+import com.unciv.logic.IsPartOfGameInfoSerialization
+import com.unciv.logic.civilization.Civilization
 import com.unciv.models.ruleset.Ruleset
 import com.unciv.models.ruleset.unit.Promotion
 import com.unciv.models.stats.Stats
@@ -241,8 +244,13 @@ class PortraitImprovement(name: String, size: Float, dim: Boolean = false, isPil
     override fun draw(batch: Batch?, parentAlpha: Float) = super.draw(batch, parentAlpha)
 }
 
-class PortraitNation(name: String, size: Float) : Portrait(Type.Nation, name, size, size*0.1f) {
+// class GameInfoPlaceHolder: IsPartOfGameInfoSerialization {
+//     //@Transient
+//     lateinit var gameInfo: GameInfo
+// }
 
+class PortraitNation(name: String, size: Float) : Portrait(Type.Nation, name, size, size*0.1f) {
+    
     override fun getDefaultImage(): Image {
         val nation = ruleset.nations[imageName]
         val isCityState = nation != null && nation.isCityState
@@ -255,8 +263,12 @@ class PortraitNation(name: String, size: Float) : Portrait(Type.Nation, name, si
             else -> ImageGetter.getCircle()
         }
     }
+    
 
-    override fun getDefaultInnerBackgroundTint(): Color = 
+    override fun getDefaultInnerBackgroundTint(): Color =
+        //GameInfoPlaceHolder().gameInfo.civMap[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
+        //ruleset.nations[imageName]?.
+        //getCiv(imageName).getOuterColor()
         ruleset.nations[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
 
     override fun getDefaultOuterBackgroundTint(): Color = getDefaultImageTint()

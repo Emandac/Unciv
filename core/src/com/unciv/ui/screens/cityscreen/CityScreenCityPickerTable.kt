@@ -19,13 +19,13 @@ class CityScreenCityPickerTable(private val cityScreen: CityScreen) : Table() {
     fun update() {
         val city = cityScreen.city
         val civInfo = city.civ
-        background = BaseScreen.skinStrings.getUiBackground("CityScreen/CityPickerTable", BaseScreen.skinStrings.roundedEdgeRectangleShape, civInfo.nation.getOuterColor())
+        background = BaseScreen.skinStrings.getUiBackground("CityScreen/CityPickerTable", BaseScreen.skinStrings.roundedEdgeRectangleShape, civInfo.getOuterColor())
         clear()
 
         if (cityScreen.viewableCities.size > 1) {
             val prevCityButton = Table() // so we get a wider clickable area than just the image itself
             val image = ImageGetter.getImage("OtherIcons/BackArrow")
-            image.color = civInfo.nation.getInnerColor()
+            image.color = civInfo.getInnerColor()
             prevCityButton.add(image).size(25f).pad(10f)
             prevCityButton.touchable = Touchable.enabled
             prevCityButton.onClick { cityScreen.page(-1) }
@@ -55,7 +55,7 @@ class CityScreenCityPickerTable(private val cityScreen: CityScreen) : Table() {
         }
 
         val currentCityLabel = city.name
-            .toLabel(fontSize = 30, fontColor = civInfo.nation.getInnerColor(), hideIcons = true)
+            .toLabel(fontSize = 30, fontColor = civInfo.getInnerColor(), hideIcons = true)
         if (cityScreen.canChangeState) currentCityLabel.onClick {
             CityRenamePopup(
                 screen = cityScreen,
@@ -70,7 +70,7 @@ class CityScreenCityPickerTable(private val cityScreen: CityScreen) : Table() {
         cityNameTable.add(currentCityLabel).minWidth(0f).padTopDescent()
         
         val currentCityPop = city.run { " (${population.population})" }
-            .toLabel(fontSize = 30, fontColor = civInfo.nation.getInnerColor(), hideIcons = true)
+            .toLabel(fontSize = 30, fontColor = civInfo.getInnerColor(), hideIcons = true)
         cityNameTable.add(currentCityPop).padTopDescent()
 
         val garrison = city.getGarrison()
@@ -87,7 +87,7 @@ class CityScreenCityPickerTable(private val cityScreen: CityScreen) : Table() {
             image.setSize(25f, 25f)
             image.setOrigin(Align.center)
             image.rotation = 180f
-            image.color = civInfo.nation.getInnerColor()
+            image.color = civInfo.getInnerColor()
             nextCityButton.add(image).size(25f).pad(10f)
             nextCityButton.touchable = Touchable.enabled
             nextCityButton.onClick { cityScreen.page(1) }

@@ -89,7 +89,7 @@ internal class VictoryScreenCivGroup(
                     || currentPlayer.knows(civ)
                     || currentPlayer.isDefeated()
                     || currentPlayer.victoryManager.hasWon() -> {
-                    return Triple(ImageGetter.getNationPortrait(civ.nation, 30f), civ.nation.getOuterColor(), civ.nation.getInnerColor())
+                    return Triple(ImageGetter.getNationPortrait(civ.nation, 30f), civ.getOuterColor(), civ.getInnerColor())
                 }
                 else ->
                     return Triple((ImageGetter.getRandomNationPortrait(30f)), Color.LIGHT_GRAY, ImageGetter.CHARCOAL)

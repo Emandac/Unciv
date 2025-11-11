@@ -159,7 +159,7 @@ class DiplomacyScreen(
             civIndicator.addActor(relationshipIcon)
 
             if (civ.isCityState) {
-                val innerColor = civ.gameInfo.ruleset.nations[civ.civName]!!.getInnerColor()
+                val innerColor = civ.getInnerColor() // gameInfo.ruleset.nations[civ.civName]!!.getInnerColor()
                 val typeIcon = ImageGetter.getImage("CityStateIcons/"+civ.cityStateType.name)
                     .surroundWithCircle(size = 35f, color = innerColor).apply {
                         actor.color = ImageGetter.CHARCOAL

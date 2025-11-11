@@ -58,12 +58,13 @@ class TileLayerUnitSprite(tileGroup: TileGroup, size: Float) : TileLayer(tileGro
         slot.currentImageLocation = "$nationName$location"
         slot.spriteGroup.clear()
 
-        val nation = unit!!.civ.nation
+        //val nation = unit!!.civ.nation
+        val civ = unit!!.civ
         val pixelUnitImages = ImageGetter.getLayeredImageColored(
             location,
             null,
-            nation.getInnerColor(),
-            nation.getOuterColor()
+            civ.getInnerColor(),
+            civ.getOuterColor()
         )
         for (pixelUnitImage in pixelUnitImages) {
             slot.spriteGroup.addActor(pixelUnitImage)

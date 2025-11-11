@@ -85,7 +85,7 @@ object MayaCalendar {
         Popup(previousScreen).apply {
             name = "MayaCalendar"
             addGoodSizedLabel("The Mayan Long Count", Constants.headingFontSize).apply {
-                actor.color = civInfo.nation.getOuterColor()
+                actor.color = civInfo.getOuterColor()
             }.row()
             addSeparator(color = Color.DARK_GRAY)
             addGoodSizedLabel("Your scientists and theologians have devised a systematic approach to measuring long time spans - the Long Count. During the festivities whenever the current b'ak'tun ends, a Great Person will join you.").row()

@@ -43,8 +43,8 @@ class MinimapTile(val tile: Tile, tileSize: Float, val onClick: () -> Unit) {
                 if (turn == null) tile.isCityCenter() else tile.history.getState(turn).cityCenterType != CityCenterType.None
         val owningCiv = if (turn == null) tile.getOwner() else getOwningCivFromHistory(tile, turn)
         image.color = when {
-            isCityCenter && !tile.isWater -> owningCiv!!.nation.getInnerColor()
-            owningCiv != null && !tile.isWater -> owningCiv.nation.getOuterColor()
+            isCityCenter && !tile.isWater -> owningCiv!!.getInnerColor()
+            owningCiv != null && !tile.isWater -> owningCiv.getOuterColor()
             else -> tile.getBaseTerrain().getColor().lerp(Color.GRAY, 0.5f)
         }
     }
@@ -72,7 +72,7 @@ class MinimapTile(val tile: Tile, tileSize: Float, val onClick: () -> Unit) {
                 continue
             }
             if (neighbor in neighborToBorderImage) {
-                neighborToBorderImage[neighbor]!!.color = owningCiv!!.nation.getInnerColor()
+                neighborToBorderImage[neighbor]!!.color = owningCiv!!.getInnerColor()
                 continue
             }
 
@@ -99,7 +99,7 @@ class MinimapTile(val tile: Tile, tileSize: Float, val onClick: () -> Unit) {
                 -relativeWorldPosition.y * hexagonEdgeLength / 2
             )
             borderImage.rotateBy(angle)
-            borderImage.color = owningCiv!!.nation.getInnerColor()
+            borderImage.color = owningCiv!!.getInnerColor()
             neighborToBorderImage[neighbor] = borderImage
         }
         val imagesAfter = neighborToBorderImage.values.toSet()
@@ -127,8 +127,8 @@ class MinimapTile(val tile: Tile, tileSize: Float, val onClick: () -> Unit) {
                     tile.history.getState(turn).cityCenterType ==
                             CityCenterType.Capital
         val nationIconSize = (if (isCapital && owningCiv.isMajorCiv()) 1.667f else 1.25f) * image.width
-        val cityCircle = ImageGetter.getCircle(nation.getInnerColor())
-            .surroundWithCircle(nationIconSize, color = nation.getOuterColor())
+        val cityCircle = ImageGetter.getCircle(owningCiv.getInnerColor())
+            .surroundWithCircle(nationIconSize, color = owningCiv.getOuterColor())
         val hexCenterXPosition = image.x + image.width / 2
         cityCircle.x = hexCenterXPosition - nationIconSize / 2
         val hexCenterYPosition = image.y + image.height / 2

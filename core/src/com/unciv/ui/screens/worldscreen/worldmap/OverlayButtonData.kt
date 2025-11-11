@@ -57,9 +57,9 @@ class MoveHereOverlayButtonData(val unitToTurnsToDestination: HashMap<MapUnit, I
 
         val firstUnit = unitToTurnsToDestination.keys.first()
         val unitIcon = if (unitToTurnsToDestination.size == 1) UnitIconGroup(firstUnit, smallerCircleSizes)
-        else unitToTurnsToDestination.size.tr().toLabel(fontColor = firstUnit.civ.nation.getInnerColor()).apply { setAlignment(
+        else unitToTurnsToDestination.size.tr().toLabel(fontColor = firstUnit.civ.getInnerColor()).apply { setAlignment(
             Align.center) }
-            .surroundWithCircle(smallerCircleSizes).apply { circle.color = firstUnit.civ.nation.getOuterColor() }
+            .surroundWithCircle(smallerCircleSizes).apply { circle.color = firstUnit.civ.getOuterColor() }
         unitIcon.y = buttonSize - unitIcon.height
         moveHereButton.addActor(unitIcon)
 

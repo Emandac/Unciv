@@ -1,5 +1,6 @@
 package com.unciv.logic.civilization
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.math.Vector2
 import com.unciv.Constants
 import com.unciv.UncivGame
@@ -136,6 +137,9 @@ class Civilization : IsPartOfGameInfoSerialization {
     val modConstants get() = gameInfo.ruleset.modOptions.constants
 
     var playerType = PlayerType.AI
+    
+    var displayOuterColor: Color? = Color.ORANGE 
+    var displayInnerColor: Color? = null 
 
     /** Used in online multiplayer for human players */
     var playerId = ""
@@ -263,6 +267,7 @@ class Civilization : IsPartOfGameInfoSerialization {
     constructor(civName: String) {
         this.civName = civName
     }
+    
 
     fun clone(): Civilization {
         val toReturn = Civilization()
@@ -311,7 +316,10 @@ class Civilization : IsPartOfGameInfoSerialization {
         toReturn.resourceStockpiles = resourceStockpiles.clone()
         return toReturn
     }
-
+    
+    fun getOuterColor(): Color = if (displayOuterColor != null) displayOuterColor!! else nation.getOuterColor()
+    fun getInnerColor(): Color = if (displayInnerColor != null) displayInnerColor!! else nation.getInnerColor() 
+    
 
 
     //region pure functions

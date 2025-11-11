@@ -16,10 +16,10 @@ class PlayerReadyScreen(worldScreen: WorldScreen) : BaseScreen() {
         val curCiv = worldScreen.viewingCiv
         table.background = skinStrings.getUiBackground(
             "PlayerReadyScreen/Background",
-            tintColor = curCiv.nation.getOuterColor()
+            tintColor = curCiv.getOuterColor()
         )
 
-        table.add("[$curCiv] ready?".toLabel(curCiv.nation.getInnerColor(), Constants.headingFontSize))
+        table.add("[$curCiv] ready?".toLabel(curCiv.getInnerColor(), Constants.headingFontSize))
 
         table.onActivation {
             game.replaceCurrentScreen(worldScreen)

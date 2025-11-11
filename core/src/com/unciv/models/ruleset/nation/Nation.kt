@@ -25,7 +25,7 @@ import kotlin.math.pow
 
 class Nation : RulesetObject() {
     var leaderName = ""
-
+    
     /**
      * Retrieves a display name for the nation's leader, considering the provided title (untranslated).
      *

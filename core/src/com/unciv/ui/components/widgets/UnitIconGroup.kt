@@ -82,7 +82,7 @@ private class FlagBackground(drawable: TextureRegionDrawable, size: Float) : Ima
 class UnitIconGroup(val unit: MapUnit, val size: Float) : NonTransformGroup() {
     var actionGroup: Group? = null
 
-    private val flagIcon = ImageGetter.getUnitIcon(unit.baseUnit, unit.civ.nation.getInnerColor())
+    private val flagIcon = ImageGetter.getUnitIcon(unit.baseUnit, unit.civ.getInnerColor())
     private var flagBg: FlagBackground = FlagBackground(getBackgroundDrawableForUnit(), size)
     private var flagSelection: Image = getBackgroundSelectionForUnit()
     private var flagMask: Image? = getBackgroundMaskForUnit()
@@ -99,8 +99,8 @@ class UnitIconGroup(val unit: MapUnit, val size: Float) : NonTransformGroup() {
         flagSelection.align = Align.center
         flagSelection.setSize(sizeSelectionX, sizeSelectionY)
 
-        flagBg.innerColor = unit.civ.nation.getOuterColor()
-        flagBg.outerColor = unit.civ.nation.getInnerColor()
+        flagBg.innerColor = unit.civ.getOuterColor()
+        flagBg.outerColor = unit.civ.getInnerColor()
         flagBg.outlineColor = flagBg.innerColor
         flagBg.drawableInner = getBackgroundInnerDrawableForUnit()
 

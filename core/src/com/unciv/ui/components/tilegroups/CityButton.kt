@@ -147,10 +147,10 @@ class AirUnitTable(city: City, numberOfUnits: Int, size: Float=14f) : BorderedTa
         padLeft(10f)
         padRight(10f)
 
-        val textColor = city.civ.nation.getInnerColor()
+        val textColor = city.civ.getInnerColor()
 
-        bgColor = city.civ.nation.getOuterColor()
-        bgBorderColor = city.civ.nation.getOuterColor()
+        bgColor = city.civ.getOuterColor()
+        bgBorderColor = city.civ.getOuterColor()
 
         val aircraftImage = ImageGetter.getImage("OtherIcons/Aircraft")
         aircraftImage.color = textColor
@@ -225,7 +225,7 @@ private class CityTable(city: City, forPopup: Boolean = false) : BorderedTable(
             city.civ.isAtWarWith(selectedCiv) -> 4f
             else -> 2f
         }
-        bgColor = city.civ.nation.getOuterColor().cpy().apply { a = 0.9f }
+        bgColor = city.civ.getOuterColor().cpy().apply { a = 0.9f }
         borderOnTop = city.civ == selectedCiv
 
         pad(0f)
@@ -253,7 +253,7 @@ private class CityTable(city: City, forPopup: Boolean = false) : BorderedTable(
     }
 
     private fun addCityPopNumber(city: City) {
-        val textColor = city.civ.nation.getInnerColor()
+        val textColor = city.civ.getInnerColor()
         val popLabel = city.population.population.tr()
             .toLabel(fontColor = textColor, fontSize = 18, alignment = Align.center)
         add(popLabel).minWidth(26f)
@@ -261,7 +261,7 @@ private class CityTable(city: City, forPopup: Boolean = false) : BorderedTable(
 
     private fun addCityGrowthBar(city: City) {
 
-        val textColor = city.civ.nation.getInnerColor()
+        val textColor = city.civ.getInnerColor()
 
         val table = Table()
 
@@ -303,7 +303,7 @@ private class CityTable(city: City, forPopup: Boolean = false) : BorderedTable(
 
     private fun addCityText(city: City, forPopup: Boolean) {
 
-        val textColor = city.civ.nation.getInnerColor()
+        val textColor = city.civ.getInnerColor()
         val table = Table().apply { isTransform = false }
 
         if (city.isCapital()) {
@@ -338,7 +338,7 @@ private class CityTable(city: City, forPopup: Boolean = false) : BorderedTable(
 
     private fun addCityConstruction(city: City) {
 
-        val textColor = city.civ.nation.getInnerColor()
+        val textColor = city.civ.getInnerColor()
 
         val cityConstructions = city.cityConstructions
         val cityCurrentConstruction = cityConstructions.getCurrentConstruction()
@@ -387,7 +387,7 @@ private class CityTable(city: City, forPopup: Boolean = false) : BorderedTable(
             city.civ.isMajorCiv() -> ImageGetter.getNationIcon(city.civ.nation.name)
             else -> ImageGetter.getImage("CityStateIcons/" + city.civ.cityStateType.name)
         }
-        icon.color = city.civ.nation.getInnerColor()
+        icon.color = city.civ.getInnerColor()
 
         add(icon.toGroup(20f)).minWidth(26f)
     }
@@ -504,7 +504,7 @@ class CityButton(val city: City, private val tileGroup: TileGroup) : Table(BaseS
         val positionX = cityTable.width / 2 + (pos.ordinal-1)*60f
 
         val indicator = ImageGetter.getTriangle().apply {
-            color = city.civ.nation.getInnerColor()
+            color = city.civ.getInnerColor()
             setSize(12f, 8f)
             setOrigin(Align.center)
             if (!isButtonMoved) {

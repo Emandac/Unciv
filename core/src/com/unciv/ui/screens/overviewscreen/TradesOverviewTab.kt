@@ -55,14 +55,14 @@ class TradesOverviewTab(
         table.defaults().pad(10f)
         table.background = BaseScreen.skinStrings.getUiBackground(
             "OverviewScreen/TradesOverviewTab/OffersTable",
-            tintColor = civ.nation.getOuterColor()
+            tintColor = civ.getOuterColor()
         )
-        table.add(civ.civName.toLabel(civ.nation.getInnerColor())).row()
+        table.add(civ.civName.toLabel(civ.getInnerColor())).row()
         table.addSeparator()
         for (offer in offersList) {
             var offerText = offer.getOfferText()
             if (!offerText.contains("\n")) offerText += "\n"
-            table.add(offerText.toLabel(civ.nation.getInnerColor())).row()
+            table.add(offerText.toLabel(civ.getInnerColor())).row()
         }
         repeat(numberOfOtherSidesOffers - offersList.size) {
             table.add("\n".toLabel())

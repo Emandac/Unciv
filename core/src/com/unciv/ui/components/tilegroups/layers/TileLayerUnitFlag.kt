@@ -92,8 +92,8 @@ class TileLayerUnitFlag(tileGroup: TileGroup, size: Float) : TileLayer(tileGroup
 
     private fun getAirUnitTable(unit: MapUnit): Table {
 
-        val iconColor = unit.civ.nation.getOuterColor()
-        val bgColor = unit.civ.nation.getInnerColor()
+        val iconColor = unit.civ.getOuterColor()
+        val bgColor = unit.civ.getInnerColor()
 
         val airUnitTable = Table()
         airUnitTable.background = BaseScreen.skinStrings.getUiBackground(
