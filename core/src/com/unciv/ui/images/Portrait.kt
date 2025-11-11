@@ -7,9 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.scenes.scene2d.utils.Layout
 import com.badlogic.gdx.utils.Align
-import com.unciv.logic.GameInfo
-import com.unciv.logic.IsPartOfGameInfoSerialization
-import com.unciv.logic.civilization.Civilization
+import com.unciv.UncivGame
 import com.unciv.models.ruleset.Ruleset
 import com.unciv.models.ruleset.unit.Promotion
 import com.unciv.models.stats.Stats
@@ -21,6 +19,7 @@ import com.unciv.ui.components.extensions.darken
 import com.unciv.ui.components.extensions.surroundWithCircle
 import com.unciv.ui.components.extensions.toGroup
 import com.unciv.ui.components.extensions.toLabel
+import com.unciv.ui.screens.newgamescreen.NewGameScreen
 
 /**
  *  ### Manages "portraits" for a subset of RulesetObjects
@@ -255,7 +254,6 @@ class PortraitNation(name: String, size: Float) : Portrait(Type.Nation, name, si
         val nation = ruleset.nations[imageName]
         val isCityState = nation != null && nation.isCityState
         val pathCityState = "NationIcons/CityState"
-
         return when {
             ImageGetter.imageExists(pathIcon) -> ImageGetter.getImage(pathIcon)
             isCityState && ImageGetter.imageExists(pathCityState)-> ImageGetter.getImage(pathCityState)
@@ -265,14 +263,27 @@ class PortraitNation(name: String, size: Float) : Portrait(Type.Nation, name, si
     }
     
 
-    override fun getDefaultInnerBackgroundTint(): Color =
+    override fun getDefaultInnerBackgroundTint(): Color {
+        val rulesetColorOrDefault = ruleset.nations[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
+        if (UncivGame.Current.screen !is NewGameScreen) {
+            return UncivGame.Current.gameInfo?.civMap[imageName]?.getOuterColor() ?:
+            rulesetColorOrDefault
+        }
+        return rulesetColorOrDefault
+    }
         //GameInfoPlaceHolder().gameInfo.civMap[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
         //ruleset.nations[imageName]?.
         //getCiv(imageName).getOuterColor()
-        ruleset.nations[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
+            
+            
+        //     else
+        //ruleset.nations[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
+        //ruleset.nations[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
 
     override fun getDefaultOuterBackgroundTint(): Color = getDefaultImageTint()
-    override fun getDefaultImageTint(): Color = ruleset.nations[imageName]?.getInnerColor() ?: Color.WHITE
+    override fun getDefaultImageTint():
+        Color = UncivGame.Current.gameInfo?.civMap[imageName]?.getInnerColor() ?:
+    ruleset.nations[imageName]?.getInnerColor() ?: Color.WHITE
 
 }
 
