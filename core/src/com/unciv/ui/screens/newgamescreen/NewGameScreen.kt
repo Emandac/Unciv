@@ -112,6 +112,18 @@ class NewGameScreen(
         startGameButton.onClick(this::startGameAvoidANRs)
         horizontalGroup.addActor(startGameButton)
         pickerPane.rightSideButton.remove()
+
+
+        //for (civ in choosableCivs)
+        //updateTables()
+        //println("ahhhhh")
+        //newGameOptionsTable.update()
+        //playerPickerTable.update()
+        //updateTables()
+        //newGameOptionsTable.update()
+        //playerPickerTable.update("Test civ")
+        
+        
     }
 
     private fun startGameAvoidANRs(){

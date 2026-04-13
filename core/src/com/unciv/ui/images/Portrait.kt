@@ -243,11 +243,6 @@ class PortraitImprovement(name: String, size: Float, dim: Boolean = false, isPil
     override fun draw(batch: Batch?, parentAlpha: Float) = super.draw(batch, parentAlpha)
 }
 
-// class GameInfoPlaceHolder: IsPartOfGameInfoSerialization {
-//     //@Transient
-//     lateinit var gameInfo: GameInfo
-// }
-
 class PortraitNation(name: String, size: Float) : Portrait(Type.Nation, name, size, size*0.1f) {
     
     override fun getDefaultImage(): Image {
@@ -266,25 +261,19 @@ class PortraitNation(name: String, size: Float) : Portrait(Type.Nation, name, si
     override fun getDefaultInnerBackgroundTint(): Color {
         val rulesetColorOrDefault = ruleset.nations[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
         if (UncivGame.Current.screen !is NewGameScreen) {
-            return UncivGame.Current.gameInfo?.civMap[imageName]?.getOuterColor() ?:
-            rulesetColorOrDefault
+            return UncivGame.Current.gameInfo?.civMap[imageName]?.getOuterColor() ?: rulesetColorOrDefault
         }
         return rulesetColorOrDefault
     }
-        //GameInfoPlaceHolder().gameInfo.civMap[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
-        //ruleset.nations[imageName]?.
-        //getCiv(imageName).getOuterColor()
-            
-            
-        //     else
-        //ruleset.nations[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
-        //ruleset.nations[imageName]?.getOuterColor() ?: ImageGetter.CHARCOAL
 
     override fun getDefaultOuterBackgroundTint(): Color = getDefaultImageTint()
-    override fun getDefaultImageTint():
-        Color = UncivGame.Current.gameInfo?.civMap[imageName]?.getInnerColor() ?:
-    ruleset.nations[imageName]?.getInnerColor() ?: Color.WHITE
-
+    override fun getDefaultImageTint(): Color {
+        val rulesetColorOrDefault = ruleset.nations[imageName]?.getInnerColor() ?: Color.WHITE
+        if (UncivGame.Current.screen !is NewGameScreen) {
+            return UncivGame.Current.gameInfo?.civMap[imageName]?.getInnerColor() ?: rulesetColorOrDefault
+        }
+        return rulesetColorOrDefault
+    }
 }
 
 class PortraitPromotion(name: String, size: Float) : Portrait(Type.Promotion, name, size) {

@@ -43,6 +43,7 @@ import yairm210.purity.annotations.Readonly
 import kotlin.math.ceil
 import kotlin.math.min
 import kotlin.math.roundToInt
+import com.unciv.models.ruleset.RulesetCache
 
 /**
  * City constructions manager.
@@ -612,6 +613,14 @@ class CityConstructions : IsPartOfGameInfoSerialization {
 
         if (building.hasUnique(UniqueType.EnemyUnitsSpendExtraMovement))
             civ.cache.updateHasActiveEnemyMovementPenalty()
+        
+        if (building.hasUnique(UniqueType.ChangeColorToCiv)) {
+            val unique = building.getMatchingUniques(UniqueType.ChangeColorToCiv).firstOrNull()!!
+            val otherNation = RulesetCache[civ.gameInfo.ruleset.mods.first()]?.nations[unique.params[0]]
+            if (otherNation != null) {
+                civ.changeColorToCiv(otherNation)
+            }
+        }
 
         // Korean unique - apparently gives the same as the research agreement
         if (building.isStatRelated(Stat.Science, city) && civ.hasUnique(UniqueType.TechBoostWhenScientificBuildingsBuiltInCapital)

@@ -138,7 +138,7 @@ class Civilization : IsPartOfGameInfoSerialization {
 
     var playerType = PlayerType.AI
     
-    var displayOuterColor: Color? = Color.ORANGE 
+    var displayOuterColor: Color? = null 
     var displayInnerColor: Color? = null 
 
     /** Used in online multiplayer for human players */
@@ -313,12 +313,18 @@ class Civilization : IsPartOfGameInfoSerialization {
         toReturn.hasMovedAutomatedUnits = hasMovedAutomatedUnits
         toReturn.statsHistory = statsHistory.clone()
         toReturn.resourceStockpiles = resourceStockpiles.clone()
+        toReturn.displayOuterColor = getOuterColor()
+        toReturn.displayInnerColor = getInnerColor()
         return toReturn
     }
     
     fun getOuterColor(): Color = if (displayOuterColor != null) displayOuterColor!! else nation.getOuterColor()
     fun getInnerColor(): Color = if (displayInnerColor != null) displayInnerColor!! else nation.getInnerColor() 
     
+    fun changeColorToCiv(otherNation: Nation) {
+        displayOuterColor = otherNation.getOuterColor()
+        displayInnerColor = otherNation.getInnerColor()
+    }
 
 
     //region pure functions

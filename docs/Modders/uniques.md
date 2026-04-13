@@ -975,6 +975,11 @@ Simple unique parameters are explained by mouseover. Complex parameters are expl
 ??? example  "Rebel units may spawn"
 	Applicable to: Global
 
+??? example  "Change color to [civFilter]"
+	Example: "Change color to [City-States]"
+
+	Applicable to: Global
+
 ??? example  "[relativeAmount]% Strength"
 	Example: "[+20]% Strength"
 

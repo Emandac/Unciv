@@ -273,6 +273,7 @@ enum class UniqueType(
     GarrisonDamageFromNukes("Damage to garrison from nuclear attacks [relativeAmount]% [cityFilter]", UniqueTarget.Global),
 
     SpawnRebels("Rebel units may spawn", UniqueTarget.Global),
+    ChangeColorToCiv("Change color to [civFilter]", UniqueTarget.Global),
 
     // endregion Other global uniques
 
