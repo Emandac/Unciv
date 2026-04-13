@@ -1,5 +1,6 @@
 package com.unciv.models
 
+import com.unciv.utils.withHash
 import java.lang.reflect.Modifier
 
 /** Used as a member of [ModOptions][com.unciv.models.ruleset.ModOptions] for moddable "constants" - factors in formulae and such.
@@ -83,7 +84,7 @@ class ModConstants {
     var naturalWonderCountAddedConstant = 0.1f
 
     // MapGenerator.spreadAncientRuins: number of ruins = suitable tile count * this
-    var ancientRuinCountMultiplier = 0.02f
+    var ancientRuinCountMultiplier = 0.025f
     // MapGenerator.spawnIce: spawn Ice where T < this, with T calculated from temperatureintensity, latitude and perlin noise.
     var spawnIceBelowTemperature = -0.8f
     // MapGenerator.spawnLakesAndCoasts: Water bodies up to this tile count become Lakes
@@ -102,7 +103,7 @@ class ModConstants {
     var pantheonGrowth = 5
 
     // AI behaviour
-    var workboatAutomationSearchMaxTiles = 20
+    var workboatAutomationSearchMaxTiles = 37
     var minimumCityLocationTileValue = 53f
 
     // Civilization
@@ -159,7 +160,7 @@ class ModConstants {
         var result = 0
         for (field in this::class.java.declaredFields) {
             if (field.modifiers and Modifier.STATIC != 0) continue
-            result = result * 31 + field.get(this).hashCode()
+            result = result.withHash(field.get(this).hashCode())
         }
         return result
     }

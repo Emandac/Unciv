@@ -9,14 +9,26 @@ import com.unciv.logic.civilization.NotificationCategory
 import com.unciv.logic.civilization.NotificationIcon
 import com.unciv.logic.civilization.OverviewAction
 import com.unciv.models.ruleset.tile.ResourceType
+import com.unciv.models.ruleset.unique.UniqueTriggerActivation
 import com.unciv.models.ruleset.unique.UniqueType
 import com.unciv.ui.screens.overviewscreen.EmpireOverviewCategories
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 class CityTurnManager(val city: City) {
 
 
     fun startTurn() {
+        city.clearCaches()
+        
+        for (resource in city.getResourcesGeneratedByCity()) {
+            if (resource.resource.isStockpiled && resource.resource.isCityWide)
+                city.gainStockpiledResource(resource.resource, resource.amount)
+        }
+        for (unique in city.getTriggeredUniques(UniqueType.TriggerUponTurnStart, includeCivUniques = false).toList()) {
+            UniqueTriggerActivation.triggerUnique(unique, city)
+        }
+
         // Construct units at the beginning of the turn,
         // so they won't be generated out in the open and vulnerable to enemy attacks before you can control them
         city.cityConstructions.constructIfEnough()
@@ -40,16 +52,24 @@ class CityTurnManager(val city: City) {
 
         // Seed resource demand countdown
         if (city.demandedResource == "" && !city.hasFlag(CityFlags.ResourceDemand)) {
-            city.setFlag(
-                CityFlags.ResourceDemand,
-                (if (city.isCapital()) 25 else 15) + Random.Default.nextInt(10))
+            setWltkResourceDemandCooldown(true)
         }
+    }
+    
+    private fun setWltkResourceDemandCooldown(isNewCity: Boolean) {
+        // Demand a new resource in ~20 turns on Standard speed
+        var duration = 15 + Random.Default.nextInt(10)
+        if (isNewCity && city.isCapital())
+            duration += 10
+        city.setFlag(CityFlags.ResourceDemand, duration, true)
     }
 
     private fun tryWeLoveTheKing() {
         if (city.demandedResource == "") return
         if (city.getAvailableResourceAmount(city.demandedResource) > 0) {
-            city.setFlag(CityFlags.WeLoveTheKing, 20 + 1) // +1 because it will be decremented by 1 in the same startTurn()
+            // manually adjust with game speed because of the +1 at the end
+            val duration = (20 * city.civ.gameInfo.speed.modifier).roundToInt() + 1 // +1 because it will be decremented by 1 in the same startTurn()
+            city.setFlag(CityFlags.WeLoveTheKing, duration) 
             city.civ.addNotification(
                 "Because they have [${city.demandedResource}], the citizens of [${city.name}] are celebrating We Love The King Day!",
                 CityAction.withLocation(city), NotificationCategory.General, NotificationIcon.City, NotificationIcon.Happiness)
@@ -92,10 +112,10 @@ class CityTurnManager(val city: City) {
             it.resourceType == ResourceType.Luxury && // Must be luxury
                     !it.hasUnique(UniqueType.CityStateOnlyResource) && // Not a city-state only resource eg jewelry
                     it.name != city.demandedResource && // Not same as last time
-                    it.name in city.tileMap.resources && // Must exist somewhere on the map
-                    city.getCenterTile().getTilesInDistance(city.getWorkRange()).none { nearTile -> nearTile.resource == it.name } // Not in this city's radius
+                    it in city.tileMap.resourceObjects && // Must exist somewhere on the map
+                    city.getCenterTile().getTilesInDistance(city.getWorkRange()).none { nearTile -> nearTile.tileResource == it } // Not in this city's radius
         }
-        val missingResources = candidates.filter { !city.civ.hasResource(it.name) }
+        val missingResources = candidates.filter { !city.civ.hasResource(it) }
         
         if (missingResources.isEmpty()) { // hooray happpy day forever!
             city.demandedResource = candidates.randomOrNull()?.name ?: ""
@@ -105,8 +125,7 @@ class CityTurnManager(val city: City) {
         val chosenResource = missingResources.randomOrNull()
         
         city.demandedResource = chosenResource?.name ?: "" // mods may have no resources as candidates even
-        // Get a new resource in ~20 turns
-        city.setFlag(CityFlags.ResourceDemand, 15 + Random.Default.nextInt(10))
+        setWltkResourceDemandCooldown(false)
         
         if (city.demandedResource != "") // Failed to get a valid resource, try again some time later
             city.civ.addNotification("[${city.name}] demands [${city.demandedResource}]!",
@@ -116,6 +135,9 @@ class CityTurnManager(val city: City) {
 
 
     fun endTurn() {
+        for (unique in city.getTriggeredUniques(UniqueType.TriggerUponTurnEnd, includeCivUniques = false).toList()) {
+            UniqueTriggerActivation.triggerUnique(unique, city)
+        }
         val stats = city.cityStats.currentCityStats
 
         city.cityConstructions.endTurn(stats)
@@ -149,6 +171,8 @@ class CityTurnManager(val city: City) {
             city.health = (city.health + 20).coerceAtMost(city.getMaxHealth())
             city.population.unassignExtraPopulation()
         }
+        
+        city.clearCaches()
     }
 
 }

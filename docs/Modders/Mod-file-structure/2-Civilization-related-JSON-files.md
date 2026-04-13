@@ -56,34 +56,38 @@ This file contains all the nations and city states, including Barbarians and Spe
 
 Each nation has the following structure:
 
-| Attribute            | Type                                                                | Default  | Notes                                                                                                                                           |
-|----------------------|---------------------------------------------------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| name                 | String                                                              | Required |                                                                                                                                                 |
-| leaderName           | String                                                              | none     | Omit only for city states! If you want LeaderPortraits, the image file names must match exactly, including case                                 |
-| style                | String                                                              | none     | Modifier appended to pixel unit image names                                                                                                     |
-| cityStateType        | String                                                              | none     | Distinguishes major civilizations from city states (must be in [CityStateTypes.json](#citystatetypesjson))                                      |
-| startBias            | List of strings                                                     | empty    | Zero or more of: [terrainFilter](../Unique-parameters.md#terrainfilter) or "Avoid [terrainFilter]". [^S]                                        |
-| preferredVictoryType | String                                                              | Neutral  | The victory type major civilizations will pursue (need not be specified in [VictoryTypes.json](5-Miscellaneous-JSON-files.md#victorytypesjson)) |
-| personality          | String                                                              | none     | The name of the personality specified in [Personalities.json](#personalitiesjson)                                                               |
-| favoredReligion      | String                                                              | none     | The religion major civilization will choose if available when founding a religion. Must be in [Religions.json](#religionsjson)                  |
-| startIntroPart1      | String                                                              | none     | Introductory blurb shown to Player on game start... [^V]                                                                                        |
-| startIntroPart2      | String                                                              | none     | ... second paragraph. ___NO___ "TBD"!!! Leave empty to skip that alert.                                                                         |
-| declaringWar         | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
-| attacked             | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
-| defeated             | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
-| denounced            | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
-| introduction         | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
-| neutralHello         | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
-| hateHello            | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
-| tradeRequest         | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
-| declaringFriendship  | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
-| innerColor           | [List of 3× Integer](5-Miscellaneous-JSON-files.md#rgb-colors-list) | black    | RGB color for outer ring of nation icon                                                                                                         |
-| outerColor           | [List of 3× Integer](5-Miscellaneous-JSON-files.md#rgb-colors-list) | Required | RGB color for inner circle of nation icon                                                                                                       |
-| uniqueName           | String                                                              | none     | Decorative name for the special characteristic of this nation                                                                                   |
-| uniqueText           | String                                                              | none     | Replacement text for "uniques". If empty, uniques are listed individually                                                                       |
-| uniques              | List                                                                | empty    | List of [unique abilities](../uniques.md) this civilisation has                                                                                 |
-| cities               | List                                                                | empty    | City names used sequentially for newly founded cities. Required for major civilizations and city states                                         |
-| civilopediaText      | List                                                                | empty    | See [civilopediaText chapter](5-Miscellaneous-JSON-files.md#civilopedia-text)                                                                   |
+| Attribute               | Type                                                                | Default  | Notes                                                                                                                                           |
+|-------------------------|---------------------------------------------------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| name                    | String                                                              | Required |                                                                                                                                                 |
+| leaderName              | String                                                              | none     | Omit only for city states! If you want LeaderPortraits, the image file names must match exactly, including case                                 |
+| style                   | String                                                              | none     | Modifier appended to pixel unit image names                                                                                                     |
+| cityStateType           | String                                                              | none     | Distinguishes major civilizations from city states (must be in [CityStateTypes.json](#citystatetypesjson))                                      |
+| startBias               | List of strings                                                     | empty    | Zero or more of: [terrainFilter](../Unique-parameters.md#terrainfilter) or "Avoid [terrainFilter]". [^S]                                        |
+| preferredVictoryType    | String                                                              | Neutral  | The victory type major civilizations will pursue (need not be specified in [VictoryTypes.json](5-Miscellaneous-JSON-files.md#victorytypesjson)) |
+| personality             | String                                                              | none     | The name of the personality specified in [Personalities.json](#personalitiesjson)                                                               |
+| favoredReligion         | String                                                              | none     | The religion major civilization will choose if available when founding a religion. Must be in [Religions.json](#religionsjson)                  |
+| startIntroPart1         | String                                                              | none     | Introductory blurb shown to Player on game start... [^V]                                                                                        |
+| startIntroPart2         | String                                                              | none     | ... second paragraph. ___NO___ "TBD"!!! Leave empty to skip that alert.                                                                         |
+| declaringWar            | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
+| attacked                | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
+| defeated                | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
+| denounced               | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
+| neutralDenouncing       | String                                                              | none     | Greeting shown in popup when a civ denounces another civ, voice hook supported [^V]                                                             |
+| hateDenouncing          | String                                                              | none     | Greeting shown in popup when an AI denounces its enemy, voice hook supported [^V]                                                               |
+| introduction            | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
+| neutralHello            | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
+| hateHello               | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
+| tradeRequest            | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
+| declaringFriendship     | String                                                              | none     | Another greeting, voice hook supported [^V]                                                                                                     |
+| neutralRejectingDemand  | String                                                              | none     | Another greeting, the leader will say this after rejecting your demand, voice hook supported [^V]                                               |
+| hateRejectingDemand     | String                                                              | none     | Another greeting, the leader will say this after rejecting your demand, voice hook supported [^V]                                               |
+| innerColor              | [List of 3× Integer](5-Miscellaneous-JSON-files.md#rgb-colors-list) | black    | RGB color for outer ring of nation icon                                                                                                         |
+| outerColor              | [List of 3× Integer](5-Miscellaneous-JSON-files.md#rgb-colors-list) | Required | RGB color for inner circle of nation icon                                                                                                       |
+| uniqueName              | String                                                              | none     | Decorative name for the special characteristic of this nation                                                                                   |
+| uniqueText              | String                                                              | none     | Replacement text for "uniques". If empty, uniques are listed individually                                                                       |
+| uniques                 | List                                                                | empty    | List of [unique abilities](../uniques.md) this civilisation has                                                                                 |
+| cities                  | List                                                                | empty    | City names used sequentially for newly founded cities. Required for major civilizations and city states                                         |
+| civilopediaText         | List                                                                | empty    | See [civilopediaText chapter](5-Miscellaneous-JSON-files.md#civilopedia-text)                                                                   |
 
 [^S]: A "Coast" preference (_unless_ combined with "Avoid") is translated to a complex test for
 coastal land tiles, tiles next to Lakes, river tiles or near-river tiles, and such civs are
@@ -151,6 +155,7 @@ There are 7 defining behaviours that influence an AI Civilization's behaviour. A
 - Diplomacy: Determines how likely the civilization is to declare friendship, a defensive pact, peace treaty, or other diplomatic actions.
 - Loyal: Determines how much the civilization values a long-lasting alliance, how willing they are to join wars with them, and how much they despise other unreliable civilizations.
 - Expansion: Determines how focused the civilization is on founding or capturing new cities. A lower value means they might focus on culture more.
+- DenounceWillingness: Determines how eager the civilization is to denounce other civs.
 
 
 ## CityStateTypes.json
@@ -193,6 +198,7 @@ Each policy branch has the following structure:
 | era        | String | Required | Unlocking era as defined in [Eras.json](5-Miscellaneous-JSON-files.md#erasjson)                                                                     |
 | priorities | Object | none     | Priorities for each victory type, [see here](#branch-priorities)                                                                                    |
 | uniques    | List   | empty    | List of [unique abilities](../uniques.md) this policy branch grants upon adopting it                                                                |
+| civilopediaText | List | empty | See [civilopediaText chapter](5-Miscellaneous-JSON-files.md#civilopedia-text) |
 | policies   | List   | empty    | List of [member policies](#member-policy-structure) and [branch 'finisher'](#branch-finisher-structure) - pay attention to the nesting of {} and [] |
 
 #### Member policy structure
@@ -204,6 +210,7 @@ Each policy branch has the following structure:
 | column    | Integer | Required | Placement in UI, each unit approximately half the icon size                          |
 | requires  | List    | empty    | List of prerequisite policy names                                                    |
 | uniques   | List    | empty    | List of [unique abilities](../uniques.md) this policy member grants upon adopting it |
+| civilopediaText | List | empty | See [civilopediaText chapter](5-Miscellaneous-JSON-files.md#civilopedia-text) |
 
 #### Branch finisher structure
 
@@ -211,6 +218,7 @@ Each policy branch has the following structure:
 |-----------|--------|----------|-------------------------------------------------------------------------------------------------------------------|
 | name      | String | Required |                                                                                                                   |
 | uniques   | List   | empty    | List of [unique abilities](../uniques.md) this finisher grants upon adopting all the policy members in the branch |
+| civilopediaText | List | empty | See [civilopediaText chapter](5-Miscellaneous-JSON-files.md#civilopedia-text) |
 
 ### Branch priorities
 
@@ -334,14 +342,14 @@ outer list of 'columns', which in turn contains one or more tech each.
 
 Each tech column has the following structure:
 
-| Attribute    | Type    | Default  | Notes                                                                                                                                     |
-|--------------|---------|----------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| columnNumber | Integer | Required | Horizontal placement in the Tech Tree                                                                                                     |
-| era          | String  | Required | Determines era reached after researching any technologies in this column. Must be in [Eras.json](5-Miscellaneous-JSON-files.md#Eras.json) |
-| techCost     | Integer | 0        | Default cost of the techs in this column                                                                                                  |
-| buildingCost | Integer | Required | Default cost of buildings requiring this tech                                                                                             |
-| wonderCost   | Integer | Required | Default cost of wonders requiring this tech                                                                                               |
-| techs        | List    | Required | List of [techs](#tech-structure) - pay attention to the nesting of {} and []                                                              |
+| Attribute    | Type    | Default  | Notes                                                                                                                                    |
+|--------------|---------|----------|------------------------------------------------------------------------------------------------------------------------------------------|
+| columnNumber | Integer | Required | Horizontal placement in the Tech Tree                                                                                                    |
+| era          | String  | Required | Determines era reached after researching any technologies in this column. Must be in [Eras.json](5-Miscellaneous-JSON-files.md#erasjson) |
+| techCost     | Integer | 0        | Default cost of the techs in this column                                                                                                 |
+| buildingCost | Integer | Required | Default cost of buildings requiring this tech                                                                                            |
+| wonderCost   | Integer | Required | Default cost of wonders requiring this tech                                                                                              |
+| techs        | List    | Required | List of [techs](#tech-structure) - pay attention to the nesting of {} and []                                                             |
 
 #### Tech structure
 

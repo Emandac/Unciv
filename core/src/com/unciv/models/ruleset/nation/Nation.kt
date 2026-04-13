@@ -3,6 +3,7 @@ package com.unciv.models.ruleset.nation
 import com.badlogic.gdx.graphics.Color
 import com.unciv.Constants
 import com.unciv.logic.MultiFilter
+import com.unciv.models.ImmutableColor
 import com.unciv.models.ruleset.Ruleset
 import com.unciv.models.ruleset.RulesetObject
 import com.unciv.models.ruleset.unique.GameContext
@@ -53,8 +54,17 @@ class Nation : RulesetObject() {
     var defeated = ""
     /** Shown for MajorCivDiplomacyTable.getDenounceButton */
     var denounced = ""
+
+    /** Popup message from the leader that issued a denouncement. */
+    var neutralDenouncing = ""
+    /** Popup message from the leader that issued a denouncement, when the relationship is poor. */
+    var hateDenouncing = ""
     /** Shown for Declaration of Friendship */
     var declaringFriendship = ""
+    /** Popup message from the leader that accepted or rejected a demand */
+    var acceptingDemand = ""
+    var neutralRejectingDemand = ""
+    var hateRejectingDemand = ""
     /** Shown for AlertType.FirstContact */
     var introduction = ""
     /** Shown in TradePopup when other Civs initiate trade with a player */
@@ -87,13 +97,13 @@ class Nation : RulesetObject() {
     override fun getUniqueTarget() = UniqueTarget.Nation
 
     @Transient
-    private var outerColorObject = Color.WHITE // Not lateinit for unit tests
-    fun getOuterColor(): Color = outerColorObject
+    private var outerColorObject:ImmutableColor = ImmutableColor(Color.WHITE) // Not lateinit for unit tests
+    fun getOuterColor(): ImmutableColor = outerColorObject
 
     @Transient
-    private var innerColorObject = Color.BLACK // Not lateinit for unit tests
+    private var innerColorObject: ImmutableColor = ImmutableColor(Color.BLACK) // Not lateinit for unit tests
 
-    fun getInnerColor(): Color = innerColorObject
+    fun getInnerColor(): ImmutableColor = innerColorObject
 
     val isCityState by lazy { cityStateType != null }
     val isMajorCiv by lazy { !isBarbarian && !isCityState && !isSpectator }
@@ -109,11 +119,11 @@ class Nation : RulesetObject() {
     var ignoreHillMovementCost = false
 
     fun setTransients() {
-        fun safeColorFromRGB(rgb: List<Int>) = if (rgb.size >= 3) colorFromRGB(rgb) else Color.PURPLE
+        fun safeColorFromRGB(rgb: List<Int>) = ImmutableColor(if (rgb.size >= 3) colorFromRGB(rgb) else Color.PURPLE)
 
         outerColorObject = safeColorFromRGB(outerColor)
 
-        innerColorObject = if (innerColor == null) ImageGetter.CHARCOAL
+        innerColorObject = if (innerColor == null) ImmutableColor(ImageGetter.CHARCOAL)
                            else safeColorFromRGB(innerColor!!)
 
         forestsAndJunglesAreRoads = uniqueMap.hasUnique(UniqueType.ForestsAndJunglesAreRoads)
@@ -126,6 +136,11 @@ class Nation : RulesetObject() {
         isCityState -> 1
         isBarbarian -> 9
         else -> 0
+    }
+    override fun getSubCategory(ruleset: Ruleset): String? = when {
+        isCityState -> "City-States"
+        isBarbarian -> "Other"
+        else -> "Civilizations"
     }
 
     override fun getCivilopediaTextLines(ruleset: Ruleset): List<FormattedLine> {

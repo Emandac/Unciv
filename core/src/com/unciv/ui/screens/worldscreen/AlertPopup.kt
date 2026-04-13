@@ -1,6 +1,6 @@
 package com.unciv.ui.screens.worldscreen
 
-import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.unciv.Constants
@@ -16,6 +16,7 @@ import com.unciv.logic.civilization.NotificationCategory
 import com.unciv.logic.civilization.NotificationIcon
 import com.unciv.logic.civilization.PopupAlert
 import com.unciv.logic.civilization.diplomacy.*
+import com.unciv.logic.map.HexCoord
 import com.unciv.logic.map.mapunit.MapUnit
 import com.unciv.models.ruleset.unique.UniqueType
 import com.unciv.models.translations.fillPlaceholders
@@ -35,6 +36,7 @@ import com.unciv.ui.screens.diplomacyscreen.LeaderIntroTable
 import com.unciv.ui.screens.victoryscreen.VictoryScreen
 import yairm210.purity.annotations.Readonly
 import java.util.EnumSet
+import kotlin.text.ifEmpty
 
 /**
  * [Popup] communicating events other than trade offers to the player.
@@ -61,6 +63,13 @@ class AlertPopup(
     private val worldScreen: WorldScreen,
     private val popupAlert: PopupAlert
 ): Popup(worldScreen) {
+    
+    companion object {
+        private const val SEPARATOR_LINE_TO_TEXT_PADDING = 25f
+        private val LIGHTER_RED_COLOR = Color(1f, 1/3f, 1/3f, 1f)
+        private val LIGHTER_GREEN_COLOR = Color(1/3f, 1f, 1/3f, 1f)
+        private val LIGHTER_ORANGE_COLOR = Color(1f, 2/5f, 0f, 1f)
+    }
 
     //region convenience getters
     private val music get() = UncivGame.Current.musicController
@@ -95,6 +104,7 @@ class AlertPopup(
             AlertType.WarDeclaration -> shouldOpen = addWarDeclaration()
             AlertType.BorderConflict -> shouldOpen = addBorderConflict()
             AlertType.TilesStolen -> shouldOpen = addTilesStolen()
+            AlertType.Denounced -> shouldOpen = addDenouncement()
             
             // demands
             AlertType.DemandToStopSettlingCitiesNear -> shouldOpen = addDemand(Demand.DoNotSettleNearUs)
@@ -103,6 +113,8 @@ class AlertPopup(
             AlertType.ReligionSpreadDespiteOurPromise -> shouldOpen = addDemandViolationNoticed(Demand.DoNotSpreadReligion)
             AlertType.DemandToStopSpyingOnUs -> shouldOpen = addDemand(Demand.DontSpyOnUs)
             AlertType.SpyingOnUsDespiteOurPromise -> shouldOpen = addDemand(Demand.DontSpyOnUs)
+            AlertType.AcceptingDemand -> shouldOpen = addAcceptingDemand()
+            AlertType.RejectingDemand -> shouldOpen = addRejectingDemand()
             
             
             AlertType.DeclarationOfFriendship -> shouldOpen = addDeclarationOfFriendship()
@@ -190,9 +202,9 @@ class AlertPopup(
         addQuestionAboutTheCity(city.name)
         val conqueringCiv = gameInfo.getCurrentPlayerCivilization()
 
-        if (city.foundingCiv != ""
-                && city.civ.civName != city.foundingCiv // can't liberate if the city actually belongs to those guys
-                && conqueringCiv.civName != city.foundingCiv) { // or belongs originally to us
+        if (city.foundingCivObject != null
+                && city.civ != city.foundingCivObject // can't liberate if the city actually belongs to those guys
+                && conqueringCiv != city.foundingCivObject) { // or belongs originally to us
             addLiberateOption(city, conqueringCiv)
             addSeparator()
         }
@@ -232,7 +244,7 @@ class AlertPopup(
         addQuestionAboutTheCity(city.name)
         val conqueringCiv = gameInfo.getCurrentPlayerCivilization()
 
-        if (!conqueringCiv.isAtWarWith(getCiv(city.foundingCiv))) {
+        if (!conqueringCiv.isAtWarWith(city.foundingCivObject!!)) {
             addLiberateOption(city, conqueringCiv)
             addSeparator()
         }
@@ -241,9 +253,10 @@ class AlertPopup(
 
     private fun addDeclarationOfFriendship(): Boolean {
         val otherciv = getCiv(popupAlert.value)
-        if (otherciv.isDefeated()) return false
+        if (otherciv.isDefeated() || otherciv.getDiplomacyManager(viewingCiv)!!.diplomaticStatus == DiplomaticStatus.War) return false
         val playerDiploManager = viewingCiv.getDiplomacyManager(otherciv)!!
         addLeaderName(otherciv)
+        addTopicHeader("DECLARATION OF FRIENDSHIP", LIGHTER_GREEN_COLOR)
         addGoodSizedLabel(
                 if (otherciv.nation.declaringFriendship.isNotEmpty()) otherciv.nation.declaringFriendship else "My friend, shall we declare our friendship to the world?"
         ).row()
@@ -258,6 +271,31 @@ class AlertPopup(
         return true
     }
 
+    private fun addDenouncement(): Boolean {
+        val denouncer = getCiv(popupAlert.value)
+        if (denouncer.isDefeated())
+            return false
+        addLeaderName(denouncer)
+        addTopicHeader("DENOUNCEMENT", LIGHTER_ORANGE_COLOR)
+        // normal message unless we are enemies
+        val leaderMessage = if (denouncer.getDiplomacyManager(viewingCiv)!!.isRelationshipLevelGE(RelationshipLevel.Competitor)) {
+            music.playVoice("${denouncer.nation.name}.neutralDenouncing")
+            denouncer.nation.neutralDenouncing.ifEmpty { "You have violated our bond of trust. This is intolerable!" }
+        } else {
+            music.playVoice("${denouncer.nation.name}.hateDenouncing")
+            denouncer.nation.hateDenouncing.ifEmpty { "You are a scourge upon this earth. I denounce you!" }
+        }
+        addGoodSizedLabel(leaderMessage).row()
+        val diplomacy = viewingCiv.getDiplomacyManager(denouncer)!!
+        if (diplomacy.canDeclareWar()) {
+            addCloseButton("THIS MEANS WAR! (Declare war)") {
+                diplomacy.declareWar()
+            }.row()
+        }
+        addCloseButton("Very well.", KeyboardBinding.Cancel).row()
+        return true
+    }
+    
     private fun addDefeated() {
         val civInfo = getCiv(popupAlert.value)
         addLeaderName(civInfo)
@@ -283,6 +321,45 @@ class AlertPopup(
         return true
     }
 
+    private fun addAcceptingDemand(): Boolean {
+        val otherCiv = getCiv(popupAlert.value)
+        if (otherCiv.isDefeated())
+            return false
+        addLeaderName(otherCiv)
+        addTopicHeader("ACCEPTING DEMAND", Color.YELLOW)
+        val leaderMessage = otherCiv.nation.acceptingDemand.ifEmpty {
+            "We will comply, but our consent is given grudgingly."
+        }
+        addGoodSizedLabel(leaderMessage).row()
+        music.playVoice("${otherCiv.civName}.acceptingDemand")
+        addCloseButton("Very well.", KeyboardBinding.Cancel)
+        return true
+    }
+    
+    private fun addRejectingDemand(): Boolean {
+        val otherCiv = getCiv(popupAlert.value)
+        if (otherCiv.isDefeated())
+            return false
+        addLeaderName(otherCiv)
+        addTopicHeader("REJECTING DEMAND", LIGHTER_ORANGE_COLOR)
+        val theirDiplomacy = otherCiv.getDiplomacyManager(viewingCiv)!!
+        val leaderMessage = if (theirDiplomacy.isRelationshipLevelGE(RelationshipLevel.Competitor)) {
+            music.playVoice("${otherCiv.nation.name}.neutralRejectingDemand")
+            otherCiv.nation.neutralRejectingDemand.ifEmpty {
+                "Your demands are in poor taste. We shall decide this matter on our own."
+            }
+        } else {
+            music.playVoice("${otherCiv.nation.name}.hateRejectingDemand")
+            otherCiv.nation.hateRejectingDemand.ifEmpty {
+                "Did you really expect us to bend to such brazen demands?"
+            }
+        }
+        addGoodSizedLabel(leaderMessage).row()
+        addCloseButton("You'll pay for this!")
+        addCloseButton("Very well.", KeyboardBinding.Cancel)
+        equalizeLastTwoButtonWidths()
+        return true
+    }
 
     private fun addDiplomaticMarriage() {
         val city = getCity(popupAlert.value)
@@ -323,14 +400,14 @@ class AlertPopup(
 
     private fun addGameHasBeenWon() {
         val victoryData = gameInfo.victoryData!!
-        addGoodSizedLabel("[${victoryData.winningCiv}] has won a [${victoryData.victoryType}] Victory!").row()
+        addGoodSizedLabel("[${victoryData.winningCivObject.civName}] has won a [${victoryData.victoryType}] Victory!").row()
         addButton("Victory status") { close(); worldScreen.game.pushScreen(VictoryScreen(worldScreen)) }.row()
         addCloseButton()
     }
 
     private fun addGoldenAge() {
         addGoodSizedLabel("GOLDEN AGE")
-        addSeparator()
+        addSeparator().padBottom(SEPARATOR_LINE_TO_TEXT_PADDING)
         addGoodSizedLabel("Your citizens have been happy with your rule for so long that the empire enters a Golden Age!").row()
         addCloseButton()
         music.chooseTrack(viewingCiv.civName, MusicMood.Golden, MusicTrackChooserFlags.setSpecific)
@@ -338,16 +415,16 @@ class AlertPopup(
 
     /** @return false to skip opening this Popup, as we're running in the initialization phase before the Popup is open */
     private fun addRecapturedCivilian(): Boolean {
-        val position = Vector2().fromString(popupAlert.value)
+        val position = HexCoord.fromString(popupAlert.value)
         val tile = gameInfo.tileMap[position]
         val capturedUnit = tile.civilianUnit  // This has got to be it
             ?: return false // the unit disappeared somehow? maybe a modded action?
-        val originalOwner = getCiv(capturedUnit.originalOwner!!)
+        val originalOwner = capturedUnit.originalOwningCiv!!
         if (originalOwner.isDefeated()) return false
         val captor = viewingCiv
 
         addGoodSizedLabel("Return [${capturedUnit.name}] to [${originalOwner.civName}]?")
-        addSeparator()
+        addSeparator().padBottom(SEPARATOR_LINE_TO_TEXT_PADDING)
         addGoodSizedLabel("The [${capturedUnit.name}] we liberated originally belonged to [${originalOwner.civName}]. They will be grateful if we return it to them.").row()
 
         bottomTable.defaults().pad(0f, 30f) // Small buttons, plenty of pad so we don't fat-finger it
@@ -360,7 +437,7 @@ class AlertPopup(
 
             if (closestCity != null) {
                 // Attempt to place the unit near their nearest city
-                originalOwner.units.placeUnitNearTile(closestCity.location, unitName)
+                originalOwner.units.placeUnitNearTile(closestCity.location.toHexCoord(), unitName)
             }
 
             if (originalOwner.isCityState) {
@@ -374,7 +451,7 @@ class AlertPopup(
                 yield(LocationAction(tile.position))
                 if (closestCity != null)
                     yield(LocationAction(closestCity.location))
-                yield(DiplomacyAction(captor.civName))
+                yield(DiplomacyAction(captor))
                 yield(CivilopediaAction("Tutorial/Barbarians"))
             }
             originalOwner.addNotification("Your captured [${unitName}] has been returned by [${captor.civName}]", notificationSequence, NotificationCategory.Diplomacy, NotificationIcon.Trade, unitName, captor.civName)
@@ -402,7 +479,7 @@ class AlertPopup(
     private fun addTechResearched() {
         val tech = gameInfo.ruleset.technologies[popupAlert.value]!!
         addGoodSizedLabel(tech.name)
-        addSeparator()
+        addSeparator().padBottom(SEPARATOR_LINE_TO_TEXT_PADDING)
         val centerTable = Table()
         centerTable.add(tech.quote.toLabel().apply { wrap = true }).width(stageWidth / 3)
         centerTable.add(ImageGetter.getTechIconPortrait(tech.name, 100f)).pad(20f)
@@ -418,19 +495,25 @@ class AlertPopup(
         // technically they already declared war, but if they're dead it'll be strange that they talk to us
         if (civInfo.isDefeated()) return false
         addLeaderName(civInfo)
+        addTopicHeader("DECLARATION OF WAR", LIGHTER_RED_COLOR)
         addGoodSizedLabel(civInfo.nation.declaringWar).row()
-        bottomTable.defaults().pad(0f, 5f)
         addCloseButton("You'll pay for this!")
         addCloseButton("Very well.")
+        equalizeLastTwoButtonWidths()
         music.chooseTrack(civInfo.civName, MusicMood.War, MusicTrackChooserFlags.setSpecific)
         music.playVoice("${civInfo.civName}.declaringWar")
         return true
     }
 
+    private fun addTopicHeader(text: String, color: Color) {
+        addGoodSizedLabel(text, color=color, size=Constants.smallerHeadingFontSize)
+            .padBottom(20f).row()
+    }
+
     private fun addWonderBuilt() {
         val wonder = gameInfo.ruleset.buildings[popupAlert.value]!!
         addGoodSizedLabel(wonder.name)
-        addSeparator()
+        addSeparator().padBottom(10f)
         if(ImageGetter.wonderImageExists(wonder.name)) {    // Wonder Graphic exists
             if(stageHeight * 3 > stageWidth * 4) {    // Portrait
                 add(ImageGetter.getWonderImage(wonder.name))
@@ -468,7 +551,7 @@ class AlertPopup(
 
     private fun addLeaderName(civInfo: Civilization) {
         add(LeaderIntroTable(civInfo))
-        addSeparator()
+        addSeparator().padBottom(SEPARATOR_LINE_TO_TEXT_PADDING)
     }
 
     private fun addQuestionAboutTheCity(cityName: String) {
@@ -524,7 +607,7 @@ class AlertPopup(
     }
 
     private fun addLiberateOption(city: City, conqueringCiv: Civilization) {
-        val button = "Liberate (city returns to [originalOwner])".fillPlaceholders(city.foundingCiv).toTextButton()
+        val button = "Liberate (city returns to [originalOwner])".fillPlaceholders(city.foundingCivObject!!.civName).toTextButton()
         button.onActivation {
             city.liberateCity(conqueringCiv)
             close()

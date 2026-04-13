@@ -12,6 +12,7 @@ import com.unciv.ui.components.fonts.DiacriticSupport
 import com.unciv.ui.components.fonts.FontRulesetIcons
 import com.unciv.utils.Log
 import com.unciv.utils.debug
+import com.unciv.utils.hashOf
 import java.util.Locale
 import org.jetbrains.annotations.VisibleForTesting
 import yairm210.purity.annotations.Immutable
@@ -72,11 +73,20 @@ class Translations : LinkedHashMap<String, TranslationEntry>() {
     }
 
     /**
+     * Returns a specific translation, or the original [text] if no translation for [language] exists
      * @see get
      */
     @Readonly
     fun getText(text: String, language: String, activeMods: HashSet<String>? = null): String {
         return get(text, language, activeMods)?.get(language) ?: text
+    }
+
+    /**
+     * Returns a specific translation, or [default] if no translation for [language] exists
+     */
+    @Readonly
+    fun getText(text: String, language: String, activeMods: HashSet<String>? = null, default: String): String {
+        return get(text, language, activeMods)?.get(language) ?: default
     }
 
     /** Get all languages present in `this`, used for [TranslationFileWriter] and `TranslationTests` */
@@ -209,42 +219,42 @@ class Translations : LinkedHashMap<String, TranslationEntry>() {
 
         debug("Loading percent complete of languages - %sms", System.currentTimeMillis() - startTime)
     }
+
     @Readonly
-    fun getConditionalOrder(language: String): String {
-        return getText(englishConditionalOrderingString, language, null)
-    }
+    fun getConditionalOrder(language: String) =
+        getText(conditionalOrderingKey, language, null, defaultConditionalOrderingString)
 
     @Readonly
     fun placeConditionalsAfterUnique(language: String) =
-        get(conditionalUniqueOrderString, language, null)?.get(language) != "before"
+        getText(conditionalPlacementKey, language, null, "") != "before"
 
     /** Returns the equivalent of a space in the given language
      * Defaults to a space if no translation is provided
      */
     @Readonly
-    fun getSpaceEquivalent(language: String): String {
-        val translation = getText("\" \"", language, null)
-        return translation.substring(1, translation.length-1)
-    }
+    fun getSpaceEquivalent(language: String) =
+        getText("\" \"", language, null).removeSurrounding("\"")
 
     @Readonly
-    fun shouldCapitalize(language: String): Boolean {
-        return get(shouldCapitalizeString, language, null)?.get(language)?.toBoolean() ?: true
-    }
+    fun shouldCapitalize(language: String) =
+        getText(shouldCapitalizeKey, language, null, "true").toBoolean()
 
     @Readonly
-    fun triggerNotificationEffectBeforeCause(language: String): Boolean{
-        return get(effectBeforeCause, language, null)?.get(language)?.toBoolean() ?: true
-    }
+    fun triggerNotificationEffectBeforeCause(language: String) =
+        getText(effectBeforeCauseKey, language, null, "true").toBoolean()
 
     companion object {
-        // Whenever this string is changed, it should also be changed in the translation files!
-        // It is mostly used as the template for translating the order of conditionals
-        const val englishConditionalOrderingString =
-            "<with a garrison> <for [mapUnitFilter] units> <above [amount] HP> <below [amount] HP> <vs cities> <vs [mapUnitFilter] units> <when fighting in [tileFilter] tiles> <when attacking> <when defending> <if this city has at least [amount] specialists> <when at war> <when not at war> <while the empire is happy> <during a Golden Age> <during the [era]> <starting from the [era]> <before the [era]> <with [techOrPolicy]> <without [techOrPolicy]>"
-        const val conditionalUniqueOrderString = "ConditionalsPlacement"
-        const val shouldCapitalizeString = "StartWithCapitalLetter"
-        const val effectBeforeCause = "EffectBeforeCause"
+        @VisibleForTesting
+        const val conditionalOrderingKey = "ConditionalsOrder"
+        @VisibleForTesting
+        const val defaultConditionalOrderingString =
+            "<with a garrison> <for [mapUnitFilter] units> <when above [amount] HP> <when below [amount] HP> <vs cities> <vs [mapUnitFilter] units> <when fighting in [tileFilter] tiles> <when attacking> <when defending> <if this city has at least [amount] specialists> <when at war> <when not at war> <while the empire is happy> <during a Golden Age> <during the [era]> <starting from the [era]> <before the [era]> <with [techOrPolicy]> <without [techOrPolicy]>"
+        @VisibleForTesting
+        const val conditionalPlacementKey = "ConditionalsPlacement"
+        @VisibleForTesting
+        const val shouldCapitalizeKey = "StartWithCapitalLetter"
+        @VisibleForTesting
+        const val effectBeforeCauseKey = "EffectBeforeCause"
     }
 }
 
@@ -287,9 +297,9 @@ object TranslationActiveModsCache {
     private fun getCurrentHash(): Int {
         val gameInfo = UncivGame.Current.gameInfo
         return if (gameInfo != null) {
-            gameInfo.gameParameters.mods.hashCode() + gameInfo.gameParameters.baseRuleset.hashCode() * 31
+            hashOf(gameInfo.gameParameters.mods.hashCode(), gameInfo.gameParameters.baseRuleset.hashCode())
         } else {
-            UncivGame.Current.translations.translationActiveMods.hashCode() * 31 * 31
+            UncivGame.Current.translations.translationActiveMods.hashCode()
         }
     }
 
@@ -338,8 +348,8 @@ fun String.tr(hideIcons: Boolean = false, hideStats: Boolean = false): String {
     val indexSquare = this.indexOf('[')
     val indexCurly = this.indexOf('{')
 
-    val squareBracketsEncounteredFirst = indexSquare >= 0 && (indexCurly < 0 || indexSquare < indexCurly)
-    val curlyBracketsEncounteredFirst =  indexCurly >= 0 && (indexSquare < 0 || indexCurly < indexSquare)
+    val squareBracketsEncounteredFirst = indexSquare >= 0 && indexCurly !in 0..indexSquare
+    val curlyBracketsEncounteredFirst =  indexCurly >= 0 && indexSquare !in 0..indexCurly
 
     if (squareBracketsEncounteredFirst)
         return translatePlaceholders(language, hideIcons)

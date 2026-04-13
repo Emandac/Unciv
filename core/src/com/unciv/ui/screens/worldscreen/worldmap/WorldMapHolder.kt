@@ -5,22 +5,20 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Vector2
-import com.badlogic.gdx.scenes.scene2d.Action
-import com.badlogic.gdx.scenes.scene2d.Actor
-import com.badlogic.gdx.scenes.scene2d.Group
-import com.badlogic.gdx.scenes.scene2d.Touchable
 import com.badlogic.gdx.scenes.scene2d.actions.Actions
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.math.Interpolation
+import com.badlogic.gdx.scenes.scene2d.*
+import com.badlogic.gdx.scenes.scene2d.utils.ActorGestureListener
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
 import com.unciv.UncivGame
 import com.unciv.logic.battle.Battle
 import com.unciv.logic.battle.MapUnitCombatant
 import com.unciv.logic.battle.TargetHelper
 import com.unciv.logic.city.City
 import com.unciv.logic.civilization.Civilization
-import com.unciv.logic.map.MapPathing
-import com.unciv.logic.map.TileMap
+import com.unciv.logic.map.*
 import com.unciv.logic.map.mapunit.MapUnit
 import com.unciv.logic.map.mapunit.movement.UnitMovement
 import com.unciv.logic.map.tile.Tile
@@ -32,14 +30,12 @@ import com.unciv.ui.components.MiscArrowTypes
 import com.unciv.ui.components.extensions.center
 import com.unciv.ui.components.extensions.isShiftKeyPressed
 import com.unciv.ui.components.extensions.surroundWithCircle
-import com.unciv.ui.components.input.ActivationTypes
-import com.unciv.ui.components.input.ClickableCircle
-import com.unciv.ui.components.input.onActivation
-import com.unciv.ui.components.input.onClick
+import com.unciv.ui.components.input.*
 import com.unciv.ui.components.tilegroups.TileGroup
 import com.unciv.ui.components.tilegroups.TileGroupMap
 import com.unciv.ui.components.tilegroups.TileSetStrings
 import com.unciv.ui.components.tilegroups.WorldTileGroup
+import com.unciv.ui.components.tilegroups.citybutton.CityButton
 import com.unciv.ui.components.widgets.UnitIconGroup
 import com.unciv.ui.components.widgets.ZoomableScrollPane
 import com.unciv.ui.screens.basescreen.UncivStage
@@ -108,31 +104,59 @@ class WorldMapHolder(
         val tileGroupsNew = tileMap.values.map { WorldTileGroup(it, tileSetStrings) }
         tileGroupMap = TileGroupMap(this, tileGroupsNew, continuousScrollingX)
 
-        for (tileGroup in tileGroupsNew) {
-            tileGroups[tileGroup.tile] = tileGroup
-            tileGroup.layerCityButton.onClick(UncivSound.Silent) {
-                onTileClicked(tileGroup.tile)
-            }
-            tileGroup.onClick { onTileClicked(tileGroup.tile) }
+        for (tileGroup in tileGroupsNew) tileGroups[tileGroup.tile] = tileGroup
 
-            // Right mouse click on desktop / Longpress on Android, and no equivalence mapping between those two,
-            // because on 'droid two-finger tap is mapped to right click and dissent has been expressed
-            tileGroup.onActivation(
-                type = if (Gdx.app.type == Application.ApplicationType.Android)
-                    ActivationTypes.Longpress else ActivationTypes.RightClick,
-                noEquivalence = true
-            ) {
-                if (!UncivGame.Current.settings.longTapMove) return@onActivation
-                val unit = worldScreen.bottomUnitTable.selectedUnit
-                    ?: return@onActivation
-                Concurrency.run("WorldScreenClick") {
-                    onTileRightClicked(unit, tileGroup.tile)
-                }
-            }
-        }
+        addClickListener()
+
         actor = tileGroupMap
         setSize(worldScreen.stage.width, worldScreen.stage.height)
         layout() // Fit the scroll pane to the contents - otherwise, setScroll won't work!
+    }
+
+    private fun addClickListener() {
+        // ActivationListener-like listener to allow us to create only one listener for the entire worldmapholder instead of one per tile
+        val listener = object : ActorGestureListener(20f, 0.25f, 1.1f, Int.MAX_VALUE.toFloat()) {
+            override fun tap(event: InputEvent?, x: Float, y: Float, count: Int, button: Int) {
+                val child = tileGroupMap.hit(x, y, true) ?: return
+
+                if (child is CityButton) { // the city button can be below the tilegroup, since it moves down when first clicked
+                    onTileClicked(child.city.getCenterTile())
+                    return
+                }
+                if (child is WorldTileGroup) {
+                    Concurrency.runOnGLThread("Sound") { SoundPlayer.play(UncivSound.Click) }
+
+                    if (button == 0) onTileClicked(child.tile) // Regular click
+                    else if (button == 1) { // Right button click = move unit to tile
+                        if (!UncivGame.Current.settings.longTapMove) return
+                        val unit = worldScreen.bottomUnitTable.selectedUnit
+                            ?: return
+                        onTileRightClicked(unit, child.tile)
+                    }
+                }
+            }
+
+            override fun longPress(actor: Actor?, x: Float, y: Float): Boolean {
+                if (actor == null) return false
+                // See #10050 - when a tap discards its actor or ascendants, Gdx can't cancel the longpress timer
+                if (actor.stage == null) return false
+
+                if (!UncivGame.Current.settings.longTapMove) return false
+                val unit = worldScreen.bottomUnitTable.selectedUnit
+                    ?: return false
+                if (Gdx.app.type != Application.ApplicationType.Android) return false
+
+                val child = tileGroupMap.hit(x, y, true) ?: return false
+                if (child !is WorldTileGroup) return false
+
+                Concurrency.run("WorldScreenClick") {
+                    onTileRightClicked(unit, child.tile)
+                }
+                return true
+            }
+        }
+
+        tileGroupMap.addListener(listener)
     }
 
     fun onTileClicked(tile: Tile) {
@@ -236,7 +260,8 @@ class WorldMapHolder(
                 /** ****** Right-click Attack ****** */
                 val attacker = MapUnitCombatant(unit)
                 if (!Battle.movePreparingAttack(attacker, attackableTile)) return
-                SoundPlayer.play(attacker.getAttackSound())
+                if (!SoundPlayer.play(UncivSound(attacker.getName())))
+                    SoundPlayer.play(attacker.getAttackSound())
                 val (damageToDefender, damageToAttacker) = Battle.attackOrNuke(attacker, attackableTile)
                 if (attackableTile.combatant != null)
                     worldScreen.battleAnimationDeferred(attacker, damageToAttacker, attackableTile.combatant, damageToDefender)
@@ -301,12 +326,19 @@ class WorldMapHolder(
                     // but it's so rare and edge-case-y that ignoring its failure is actually acceptable, hence the empty catch
                     val previousTile = selectedUnit.currentTile
                     selectedUnit.movement.moveToTile(tileToMoveTo)
+                    
+                    // If you try to send a unit to a tile that it can't even get nearer to, then this is actualy a dud
+                    if (previousTile == selectedUnit.currentTile){
+                        removeUnitActionOverlay() // so the user knows the action 'has been performed'
+                        return@launchOnGLThread
+                    }
+                    
                     if (selectedUnit.isExploring() || selectedUnit.isMoving())
                         selectedUnit.action = null // remove explore on manual move
                     SoundPlayer.play(UncivSound.Whoosh)
                     if (selectedUnit.currentTile != targetTile)
                         selectedUnit.action =
-                                "moveTo ${targetTile.position.x.toInt()},${targetTile.position.y.toInt()}"
+                                "moveTo ${targetTile.position.x},${targetTile.position.y}"
                     if (selectedUnit.hasMovement()) worldScreen.bottomUnitTable.selectUnit(selectedUnit)
 
                     worldScreen.shouldUpdate = true
@@ -378,7 +410,7 @@ class WorldMapHolder(
 
     internal fun swapMoveUnitToTargetTile(selectedUnit: MapUnit, targetTile: Tile) {
         markUnitMoveTutorialComplete(selectedUnit)
-        selectedUnit.movement.swapMoveToTile(targetTile)
+        selectedUnit.movement.swapMoveToTile(targetTile, keepEscorting = true)
 
         if (selectedUnit.isExploring() || selectedUnit.isMoving())
             selectedUnit.action = null // remove explore on manual swap-move
@@ -469,7 +501,9 @@ class WorldMapHolder(
                 selectedUnit.civ.hasExplored(tile)
 
             if (validTile) {
-                val roadPath: List<Tile>? = MapPathing.getRoadPath(selectedUnit.civ, selectedUnit.getTile(), tile)
+                val roadPath: List<Tile>? =
+                    if (UncivGame.Current.settings.useAStarPathfinding) selectedUnit.movement.getRoadPath(selectedUnit.getTile())
+                    else MapPathing.getRoadPath(selectedUnit.civ, selectedUnit.getTile(), tile)
                 launchOnGLThread {
                     if (roadPath == null) { // give the regular tile overlays with no road connection
                         addTileOverlays(tile)
@@ -567,7 +601,7 @@ class WorldMapHolder(
      * @param targetVisibleUnits Sequence of [MapUnit]s for which the active movement target can be displayed.
      * @param visibleAttacks Sequence of pairs of [Vector2] positions of the sources and the targets of all attacks that can be displayed.
      * */
-    internal fun updateMovementOverlay(pastVisibleUnits: Sequence<MapUnit>, targetVisibleUnits: Sequence<MapUnit>, visibleAttacks: Sequence<Pair<Vector2, Vector2>>) {
+    internal fun updateMovementOverlay(pastVisibleUnits: Sequence<MapUnit>, targetVisibleUnits: Sequence<MapUnit>, visibleAttacks: Sequence<Pair<HexCoord, HexCoord>>) {
         val selectedUnit = worldScreen.bottomUnitTable.selectedUnit
         for (unit in pastVisibleUnits) {
             if (unit.movementMemories.isEmpty()) continue
@@ -604,7 +638,7 @@ class WorldMapHolder(
      * @param selectUnit Select a unit at the destination
      * @return `true` if scroll position was changed, `false` otherwise
      */
-    fun setCenterPosition(vector: Vector2, immediately: Boolean = false, selectUnit: Boolean = true, forceSelectUnit: MapUnit? = null): Boolean {
+    fun setCenterPosition(vector: HexCoord, immediately: Boolean = false, selectUnit: Boolean = true, forceSelectUnit: MapUnit? = null): Boolean {
         val tileGroup = tileGroups.values.firstOrNull { it.tile.position == vector } ?: return false
         selectedTile = tileGroup.tile
         if (selectUnit || forceSelectUnit != null)

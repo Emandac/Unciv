@@ -1,5 +1,6 @@
 package com.unciv.logic.automation.civilization
 
+import com.unciv.UncivGame
 import com.unciv.logic.battle.BattleDamage
 import com.unciv.logic.battle.CityCombatant
 import com.unciv.logic.battle.MapUnitCombatant
@@ -119,7 +120,7 @@ object MotivationToAttackAutomation {
             //The more potential friends of this CS, the more times the friend bonus is shared and the utilitarian option is to leave it alive
             modifiers.add(Pair("Influence", -targetCiv.getDiplomacyManager(civInfo)!!.getInfluence() / 10f * personality.scaledFocus(PersonalityValue.Diplomacy)))
             // The more we invested into the city state already, the less likely we're going to attack it, and vice versa
-            if (targetCiv.getAllyCivName() == civInfo.civName)
+            if (targetCiv.allyCiv == civInfo)
                 modifiers.add(Pair("Allied City-state", -20 * personality.scaledFocus(PersonalityValue.Diplomacy))) // There had better be a DAMN good reason
         }
 
@@ -256,7 +257,7 @@ object MotivationToAttackAutomation {
     @Readonly
     private fun getDefensivePactAlliesScore(otherCiv: Civilization, civInfo: Civilization, baseForce: Float, ourCombatStrength: Float): Float {
         var theirAlliesValue = 0f
-        for (thirdCiv in otherCiv.diplomacy.values.filter { it.hasFlag(DiplomacyFlags.DefensivePact) && it.otherCiv() != civInfo }) {
+        for (thirdCiv in otherCiv.diplomacy.values.filter { it.hasFlag(DiplomacyFlags.DefensivePact) && it.otherCiv != civInfo }) {
             val thirdCivCombatStrengthRatio = (otherCiv.getStatForRanking(RankingType.Force).toFloat() + baseForce) / ourCombatStrength
             theirAlliesValue += when {
                 thirdCivCombatStrengthRatio > 5 -> -15f
@@ -341,7 +342,9 @@ object MotivationToAttackAutomation {
             // We only want to calculate the best attack path and use it's value
             // Land routes are clearly better than sea routes
             for ((_, cityToAttack) in attacksGroupedByCity.value) {
-                val landAttackPath = MapPathing.getConnection(civInfo, cityToAttackFrom.getCenterTile(), cityToAttack.getCenterTile(), ::isLandTileCanMoveThrough)
+                val landAttackPath = 
+                    if (UncivGame.Current.settings.useAStarPathfinding) cityToAttackFrom.getLandAttackPath(cityToAttack, maxTurns = 17)
+                    else MapPathing.getConnection(civInfo, cityToAttackFrom.getCenterTile(), cityToAttack.getCenterTile(), ::isLandTileCanMoveThrough)
                 if (landAttackPath != null && landAttackPath.size < 16) {
                     attackPaths.add(landAttackPath)
                     cityAttackValue = 3f
@@ -350,7 +353,9 @@ object MotivationToAttackAutomation {
 
                 if (cityAttackValue > 0) continue
 
-                val landAndSeaAttackPath = MapPathing.getConnection(civInfo, cityToAttackFrom.getCenterTile(), cityToAttack.getCenterTile(), ::isTileCanMoveThrough)
+                val landAndSeaAttackPath =
+                    if (UncivGame.Current.settings.useAStarPathfinding) cityToAttackFrom.getAmphibiousAttackPath(cityToAttack, maxTurns = 17)
+                    else MapPathing.getConnection(civInfo, cityToAttackFrom.getCenterTile(), cityToAttack.getCenterTile(), ::isTileCanMoveThrough)
                 if (landAndSeaAttackPath != null  && landAndSeaAttackPath.size < 16) {
                     attackPaths.add(landAndSeaAttackPath)
                     cityAttackValue += 1

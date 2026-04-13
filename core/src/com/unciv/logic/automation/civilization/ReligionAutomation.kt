@@ -109,10 +109,11 @@ object ReligionAutomation {
         val hasUniqueToTakeCivReligion = missionaryConstruction.hasUnique(UniqueType.TakeReligionOverBirthCity)
 
         val validCitiesToBuy = civInfo.cities.filter {
-            (hasUniqueToTakeCivReligion || it.religion.getMajorityReligion() == civInfo.religionManager.religion)
-            && (missionaryConstruction.getStatBuyCost(it, Stat.Faith) ?: return@filter false) <= civInfo.religionManager.storedFaith
-            && missionaryConstruction.isPurchasable(it.cityConstructions)
-            && missionaryConstruction.canBePurchasedWithStat(it, Stat.Faith)
+            it.getCenterTile().civilianUnit == null // can't purchase them here
+                && (hasUniqueToTakeCivReligion || it.religion.getMajorityReligion() == civInfo.religionManager.religion)
+                && (missionaryConstruction.getStatBuyCost(it, Stat.Faith) ?: return@filter false) <= civInfo.religionManager.storedFaith
+                && missionaryConstruction.isPurchasable(it.cityConstructions)
+                && missionaryConstruction.canBePurchasedWithStat(it, Stat.Faith)
         }
         if (validCitiesToBuy.isEmpty()) return
 
@@ -240,15 +241,25 @@ object ReligionAutomation {
         var bonusYield = 0f
         for (unique in belief.uniqueObjects) {
             when (unique.type) {
-                UniqueType.StatsFromObject -> if ((tile.matchesFilter(unique.params[1])
-                    && !(tile.lastTerrain.hasUnique(UniqueType.ProductionBonusWhenRemoved) && tile.lastTerrain.matchesFilter(unique.params[1])) //forest pantheons are bad, as we want to remove the forests
-                    || (tile.resource != null && (tile.tileResource.matchesFilter(unique.params[1]) || tile.tileResource.isImprovedBy(unique.params[1]))))) //resource pantheons are good, as we want to work the tile anyways
-                    bonusYield += unique.stats.values.sum()
-                UniqueType.StatsFromTilesWithout ->
-                    if (city.matchesFilter(unique.params[3])
-                        && tile.matchesFilter(unique.params[1])
-                        && !tile.matchesFilter(unique.params[2])
+                UniqueType.StatsFromObject -> {
+                    val resource = tile.tileResource
+                    if (tile.matchesFilter(unique.params[1])) {
+                        if (!tile.lastTerrain.hasUnique(UniqueType.ProductionBonusWhenRemoved) ||
+                            !tile.lastTerrain.matchesFilter(unique.params[1]) //forest pantheons are bad, as we want to remove the forests
+                        ) bonusYield += unique.stats.values.sum()
+                        else if (resource != null && (resource.matchesFilter(unique.params[1]) ||
+                                resource.isImprovedBy(unique.params[1]))
+                        ) bonusYield += unique.stats.values.sum() //resource pantheons are good, as we want to work the tile anyways
+                    } else if (resource != null && (resource.matchesFilter(unique.params[1]) ||
+                            resource.isImprovedBy(unique.params[1]))
+                    ) bonusYield += unique.stats.values.sum() //resource pantheons are good, as we want to work the tile anyways
+                }
+                UniqueType.StatsFromTilesWithout -> {
+                    if (city.matchesFilter(unique.params[3]) &&
+                        tile.matchesFilter(unique.params[1]) &&
+                        !tile.matchesFilter(unique.params[2])
                     ) bonusYield += unique.stats.values.sum()
+                }
                 else -> {}
             }
         }
@@ -424,16 +435,17 @@ object ReligionAutomation {
 
     private fun foundReligion(civInfo: Civilization) {
         if (civInfo.religionManager.religionState != ReligionState.FoundingReligion) return
-        val availableReligionIcons = civInfo.gameInfo.ruleset.religions
-            .filterNot { civInfo.gameInfo.religions.values.map { religion -> religion.name }.contains(it) }
-        val favoredReligion = civInfo.nation.favoredReligion
-        val religionIcon =
-            if (favoredReligion != null && favoredReligion in availableReligionIcons
-                && (1..10).random() <= 5) favoredReligion
-            else availableReligionIcons.randomOrNull()
-                ?: return // Wait what? How did we pass the checking when using a great prophet but not this?
+        val usedReligions = civInfo.gameInfo.religions.values.mapTo(mutableSetOf()) { it.name }
+        val availableReligions = civInfo.gameInfo.ruleset.religions.filterNot { it in usedReligions }
+        val favoredReligion = civInfo.nation.favoredReligion?.takeIf { it in availableReligions }
+        val allFavoredReligions = civInfo.gameInfo.civilizations.mapNotNullTo(mutableSetOf()) { it.nation.favoredReligion}
+        val nonFavoredReligions = availableReligions.filterNot { it in allFavoredReligions }
+        val chosenReligion = favoredReligion
+            ?: nonFavoredReligions.randomOrNull() // allow other civs to found their own favoured religion when possible
+            ?: availableReligions.randomOrNull()
+            ?: return // Wait what? How did we pass the checking when using a great prophet but not this?
 
-        civInfo.religionManager.foundReligion(religionIcon, religionIcon)
+        civInfo.religionManager.foundReligion(chosenReligion, chosenReligion)
 
         val chosenBeliefs = chooseBeliefs(civInfo, civInfo.religionManager.getBeliefsToChooseAtFounding()).toList()
         civInfo.religionManager.chooseBeliefs(chosenBeliefs)
@@ -479,7 +491,8 @@ object ReligionAutomation {
                     && !additionalBeliefsToExclude.contains(it)
                     && civInfo.religionManager.getReligionWithBelief(it) == null
                     && it.getMatchingUniques(UniqueType.OnlyAvailable, GameContext.IgnoreConditionals)
-                    .none { unique -> !unique.conditionalsApply(civInfo.state) }
+                        .none { unique -> !unique.conditionalsApply(civInfo.state) }
+                    && it.getMatchingUniques(UniqueType.Unavailable, civInfo.state).none()
             }
             .maxByOrNull { rateBelief(civInfo, it) }
     }

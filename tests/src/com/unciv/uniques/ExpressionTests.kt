@@ -1,6 +1,7 @@
 package com.unciv.uniques
 
-import com.badlogic.gdx.math.Vector2
+import com.unciv.logic.map.HexCoord
+import com.unciv.models.ruleset.unique.Countables
 import com.unciv.models.ruleset.unique.GameContext
 import com.unciv.models.ruleset.unique.expressions.Parser
 import com.unciv.testing.GdxTestRunner
@@ -30,13 +31,17 @@ class ExpressionTests {
             "2 ^ 3 ^ 2" to 512.0,
             "pi * .5" to PI / 2,
             "(2+1.5)*(4+10)" to (2 + 1.5) * (4 + 10),
+            "max(0,1)" to 1.0,
+            "min(0,1)" to 0.0,
+            "max(5,3,7,2)" to 7.0,
         )
 
         var fails = 0
         for ((expression, expected) in input) {
             val actual = try {
                 Parser.eval(expression)
-            } catch (_: Parser.ParsingError) {
+            } catch (ex: Parser.ParsingError) {
+                println("Expression \"$expression\" threw exception: ${ex::class.simpleName}: ${ex.message}")
                 null
             }
             if (actual != null && abs(actual - expected) < epsilon) continue
@@ -86,11 +91,12 @@ class ExpressionTests {
     }
 
     @Test
+    @CoversCountable(Countables.FilteredCities, Countables.OwnedTiles)
     fun testExpressionsWithCountables() {
         val game = TestGame()
         game.makeHexagonalMap(2)
         val civ = game.addCiv()
-        val city = game.addCity(civ, game.getTile(Vector2.Zero))
+        val city = game.addCity(civ, game.getTile(HexCoord.Zero))
 
         val input = listOf(
             "√[[Your] Cities]" to 1.0,

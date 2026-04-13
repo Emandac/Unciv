@@ -11,6 +11,8 @@ object MapShape {
     const val rectangular = "Rectangular"
     const val hexagonal = "Hexagonal"
     const val flatEarth = "Flat Earth Hexagonal"
+    
+    val allValues = listOf(rectangular, hexagonal, flatEarth)
 }
 
 object MapGeneratedMainType {
@@ -35,6 +37,8 @@ object MapType {
     const val innerSea = "Inner Sea"
     const val lakes = "Lakes"
     const val smallContinents = "Small Continents"
+    
+    val allValues = listOf(perlin, pangaea, continentAndIslands, twoContinents, threeContinents, fourCorners, archipelago, fractal, innerSea, lakes, smallContinents)
 
     // All ocean tiles
     const val empty = "Empty"
@@ -83,30 +87,32 @@ class MapParameters : IsPartOfGameInfoSerialization {
     /** Shifts temperature (after random, latitude and temperatureintensity).*/
     var temperatureShift = 0f
 
-    fun clone() = MapParameters().also {
-        it.name = name
-        it.type = type
-        it.shape = shape
-        it.mapSize = mapSize.clone()
-        it.mapResources = mapResources
-        it.noRuins = noRuins
-        it.noNaturalWonders = noNaturalWonders
-        it.worldWrap = worldWrap
-        it.strategicBalance = strategicBalance
-        it.legendaryStart = legendaryStart
-        it.mods = LinkedHashSet(mods)
-        it.baseRuleset = baseRuleset
-        it.seed = seed
-        it.tilesPerBiomeArea = tilesPerBiomeArea
-        it.maxCoastExtension = maxCoastExtension
-        it.elevationExponent = elevationExponent
-        it.temperatureintensity = temperatureintensity
-        it.temperatureShift = temperatureShift
-        it.vegetationRichness = vegetationRichness
-        it.rareFeaturesRichness = rareFeaturesRichness
-        it.resourceRichness = resourceRichness
-        it.waterThreshold = waterThreshold
-        it.createdWithVersion = createdWithVersion
+    fun clone(): MapParameters {
+        val toReturn = MapParameters()
+        toReturn.name = name
+        toReturn.type = type
+        toReturn.shape = shape
+        toReturn.mapSize = mapSize.clone()
+        toReturn.mapResources = mapResources
+        toReturn.noRuins = noRuins
+        toReturn.noNaturalWonders = noNaturalWonders
+        toReturn.worldWrap = worldWrap
+        toReturn.strategicBalance = strategicBalance
+        toReturn.legendaryStart = legendaryStart
+        toReturn.mods = LinkedHashSet(mods)
+        toReturn.baseRuleset = baseRuleset
+        toReturn.seed = seed
+        toReturn.tilesPerBiomeArea = tilesPerBiomeArea
+        toReturn.maxCoastExtension = maxCoastExtension
+        toReturn.elevationExponent = elevationExponent
+        toReturn.temperatureintensity = temperatureintensity
+        toReturn.temperatureShift = temperatureShift
+        toReturn.vegetationRichness = vegetationRichness
+        toReturn.rareFeaturesRichness = rareFeaturesRichness
+        toReturn.resourceRichness = resourceRichness
+        toReturn.waterThreshold = waterThreshold
+        toReturn.createdWithVersion = createdWithVersion
+        return toReturn
     }
 
     fun reseed() {
@@ -169,7 +175,7 @@ class MapParameters : IsPartOfGameInfoSerialization {
         yield(", {Vegetation richness}=" + vegetationRichness.niceToString(2))
         yield(", {Rare features richness}=" + rareFeaturesRichness.niceToString(3))
         yield(", {Max Coast extension}=$maxCoastExtension")
-        yield(", {Biome areas extension}=$tilesPerBiomeArea")
+        yield(", {Biome size}=$tilesPerBiomeArea")
         yield(", {Water level}=" + waterThreshold.niceToString(2))
     }.joinToString("")
 

@@ -53,22 +53,34 @@ class VictoryScreen(
         Global('G', caption = "Global status") {
             override fun getContent(parent: VictoryScreen) = VictoryScreenGlobalVictory(parent.worldScreen)
         },
-        Illustration('I', allowAsSecret = true) {
+        Illustration('I') {
             override fun getContent(parent: VictoryScreen) = VictoryScreenIllustrations(parent, parent.worldScreen)
             override fun isHidden(playerCiv: Civilization) = !VictoryScreenIllustrations.enablePage(playerCiv.gameInfo)
         },
         Demographics('D', allowAsSecret = true) {
             override fun getContent(parent: VictoryScreen) = VictoryScreenDemographics(parent.worldScreen)
-            override fun isHidden(playerCiv: Civilization) = !UncivGame.Current.settings.useDemographics
+            override fun isHidden(playerCiv: Civilization): Boolean {
+                if (!playerCiv.gameInfo.gameParameters.showDemographics &&
+                    !UncivGame.Current.settings.useDemographics) return true
+                if (playerCiv.isSpectator()) return false
+                if (!playerCiv.gameInfo.gameParameters.showVictoryStats &&
+                    !playerCiv.gameInfo.gameParameters.showDemographics) return true
+                return false
+            }
         },
         Rankings('R', allowAsSecret = true) {
             override fun getContent(parent: VictoryScreen) = VictoryScreenCivRankings(parent.worldScreen)
-            override fun isHidden(playerCiv: Civilization) = UncivGame.Current.settings.useDemographics
+            override fun isHidden(playerCiv: Civilization) =
+                UncivGame.Current.settings.useDemographics ||
+                (!playerCiv.isSpectator() && !playerCiv.gameInfo.gameParameters.showVictoryStats)
         },
         Charts('C') {
             override fun getContent(parent: VictoryScreen) = VictoryScreenCharts(parent.worldScreen)
             override fun isHidden(playerCiv: Civilization) =
-                !playerCiv.isSpectator() && playerCiv.statsHistory.size < 2
+                if (playerCiv.isSpectator())
+                    playerCiv.gameInfo.civilizations.all { it.statsHistory.size < 2 }
+                else
+                    playerCiv.statsHistory.size < 2 || !playerCiv.gameInfo.gameParameters.showVictoryStats
         },
         Replay('P', allowAsSecret = true) {
             override fun getContent(parent: VictoryScreen) = VictoryScreenReplay(parent.worldScreen)
@@ -101,7 +113,7 @@ class VictoryScreen(
                 icon, iconSize,
                 scrollAlign = Align.topLeft,
                 shortcutKey = KeyCharAndCode(tab.key),
-                secret = tabHidden && tab.allowAsSecret
+                secret = tabHidden
             )
         }
         tabs.selectPage(pageNumber)
@@ -150,17 +162,18 @@ class VictoryScreen(
     }
 
     private fun displayWinner(victoryData: VictoryData) {
-        // We could add `, victoryTurn` to the left side - undecided how to display
-        val (winningCiv, victoryType) = victoryData
+        // Undecided how to display victoryTurn
+        val victoryType = victoryData.victoryType
+        val winningCiv = victoryData.winningCivObject
         val victory = gameInfo.ruleset.victories[victoryType]
             ?: Victory()  // This contains our default victory/defeat texts
-        if (winningCiv == playerCiv.civName) {
+        if (winningCiv.civID == playerCiv.civID) {
             displayWonOrLost("You have won a [$victoryType] Victory!", victory.victoryString)
             if (!music.chooseTrack(victory.name, MusicMood.Victory, EnumSet.of(MusicTrackChooserFlags.PrefixMustMatch, MusicTrackChooserFlags.SuffixMustMatch))) {
                 music.chooseTrack(playerCiv.civName, listOf(MusicMood.Victory, MusicMood.Theme), EnumSet.of(MusicTrackChooserFlags.SuffixMustMatch))
             }
         } else {
-            displayWonOrLost("[$winningCiv] has won a [$victoryType] Victory!", victory.defeatString)
+            displayWonOrLost("[${winningCiv.civName}] has won a [$victoryType] Victory!", victory.defeatString)
             if (!music.chooseTrack(victory.name, MusicMood.Defeat, EnumSet.of(MusicTrackChooserFlags.PrefixMustMatch, MusicTrackChooserFlags.SuffixMustMatch))) {
                 music.chooseTrack(playerCiv.civName, MusicMood.Defeat, EnumSet.of(MusicTrackChooserFlags.SuffixMustMatch))
             }

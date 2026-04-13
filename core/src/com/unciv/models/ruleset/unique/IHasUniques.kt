@@ -130,6 +130,7 @@ interface IHasUniques : INamed {
             UniqueType.ConditionalSpeed,
             UniqueType.ConditionalDifficulty,
             UniqueType.ConditionalDifficultyOrHigher,
+            UniqueType.ConditionalDifficultyOrLower,
             UniqueType.ConditionalReligionEnabled,
             UniqueType.ConditionalReligionDisabled,
             UniqueType.ConditionalEspionageEnabled,
@@ -205,6 +206,10 @@ interface IHasUniques : INamed {
         for (unique in getMatchingUniques(UniqueType.OnlyAvailable, GameContext.IgnoreConditionals)) {
             if (unique.hasModifier(enabler)) return !hasFeature
             if (unique.hasModifier(disabler)) return hasFeature
+        }
+        for (unique in getMatchingUniques(UniqueType.Unavailable, GameContext.IgnoreConditionals)) {
+            if (unique.hasModifier(enabler)) return hasFeature
+            if (unique.hasModifier(disabler)) return !hasFeature
         }
         return false
     }

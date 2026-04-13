@@ -2,16 +2,13 @@ package com.unciv.ui.screens.cityscreen
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.scenes.scene2d.ui.Table
-import com.unciv.UncivGame
 import com.unciv.logic.map.tile.Tile
 import com.unciv.logic.map.tile.TileDescription
 import com.unciv.models.stats.Stat
 import com.unciv.models.stats.Stats
-import com.unciv.ui.components.UncivTooltip.Companion.addTooltip
 import com.unciv.ui.components.extensions.darken
 import com.unciv.ui.components.extensions.disable
 import com.unciv.ui.components.extensions.isEnabled
-import com.unciv.ui.components.input.keyShortcuts
 import com.unciv.ui.components.input.onActivation
 import com.unciv.ui.components.input.onClick
 import com.unciv.ui.components.extensions.toLabel
@@ -19,7 +16,6 @@ import com.unciv.ui.components.extensions.toTextButton
 import com.unciv.ui.components.input.KeyboardBinding
 import com.unciv.ui.images.ImageGetter
 import com.unciv.ui.screens.basescreen.BaseScreen
-import com.unciv.ui.screens.civilopediascreen.CivilopediaScreen
 import com.unciv.ui.screens.civilopediascreen.FormattedLine.IconDisplay
 import com.unciv.ui.screens.civilopediascreen.MarkupRenderer
 import kotlin.math.roundToInt
@@ -49,9 +45,14 @@ class CityScreenTileTable(private val cityScreen: CityScreen) : Table() {
         val stats = selectedTile.stats.getTileStats(city, city.civ)
         innerTable.pad(5f)
 
-        innerTable.add(MarkupRenderer.render(TileDescription.toMarkup(selectedTile, city.civ), iconDisplay = IconDisplay.None) {
+        innerTable.add(MarkupRenderer.render(TileDescription.toMarkup(
+            selectedTile,
+            city.civ,
+            hideUnits = cityScreen.isSpying,
+            spyCity = if (cityScreen.isSpying) cityScreen.city else null
+        ), iconDisplay = IconDisplay.None) {
             cityScreen.openCivilopedia(it)
-        } )
+        })
         innerTable.row()
         innerTable.add(getTileStatsTable(stats)).row()
 
@@ -93,7 +94,10 @@ class CityScreenTileTable(private val cityScreen: CityScreen) : Table() {
                 innerTable.add(lockButton).padTop(5f).row()
             }
         }
-        if (selectedTile.isCityCenter() && selectedTile.getCity() != city && selectedTile.getCity()!!.civ == city.civ)
+        if (selectedTile.isCityCenter()
+            && selectedTile.getCity() != city
+            && selectedTile.getCity()!!.civ == city.civ
+            && !cityScreen.isSpying)
             innerTable.add("Move to city".toTextButton().onClick { cityScreen.game.replaceCurrentScreen(
                 CityScreen(selectedTile.getCity()!!)
             ) })

@@ -241,7 +241,7 @@ class TradeEvaluation {
                 
                 // We're buying peace if it's city state that is our ally
                 if (thirdCiv.isCityState) {
-                    val allyCiv = thirdCiv.getAllyCiv()
+                    val allyCiv = thirdCiv.allyCiv
                     if (allyCiv != null && allyCiv == civInfo) {
                         // TODO: More sophisticated formula needed, a reverse of [CityStateFunctions.influenceGainedByGift]
                         val surplusInfluence = (thirdCiv.getDiplomacyManager(civInfo)!!.getInfluence() - 60).coerceAtLeast(0f)
@@ -297,7 +297,7 @@ class TradeEvaluation {
         if (thirdCiv.isHuman()) return false
 
         if (thirdCiv.isCityState) {
-            val allyCiv = thirdCiv.getAllyCiv()
+            val allyCiv = thirdCiv.allyCiv
             if (allyCiv != null && civInfo.isAtWarWith(allyCiv)) {
                 // City state is allied to civ with whom trade partner is at war with,
                 // need to trade peace with that civ instead
@@ -318,14 +318,14 @@ class TradeEvaluation {
 
     @Readonly
     private fun surroundedByOurCities(city: City, civInfo: Civilization): Int {
-        val borderingCivs: Set<String> = getNeighbouringCivs(city)
-        if (borderingCivs.contains(civInfo.civName))
+        val borderingCivs: Set<Civilization> = getNeighbouringCivs(city)
+        if (borderingCivs.contains(civInfo))
             return 3 // if the city has a border with trading civ
         return 0
     }
 
     @Readonly
-    private fun getNeighbouringCivs(city: City): Set<String> {
+    private fun getNeighbouringCivs(city: City): Set<Civilization> {
         val tilesList: HashSet<Tile> = city.getTiles().toHashSet()
         val cityPositionList: ArrayList<Tile> = arrayListOf()
 
@@ -336,7 +336,7 @@ class TradeEvaluation {
 
         return cityPositionList
             .asSequence()
-            .mapNotNull { it.getOwner()?.civName }
+            .mapNotNull { it.getOwner() }
             .toSet()
     }
 
@@ -356,10 +356,12 @@ class TradeEvaluation {
         when (offer.type) {
             TradeOfferType.Embassy -> {
                 val tradePartnerDiplo = civInfo.getDiplomacyManager(tradePartner)!!
-                if (tradePartnerDiplo.isRelationshipLevelLE(RelationshipLevel.Enemy)) return Int.MIN_VALUE
-                else if (tradePartnerDiplo.isRelationshipLevelLE(RelationshipLevel.Competitor))
-                    return (60 * civInfo.gameInfo.speed.goldCostModifier).toInt()
-                return (30 * civInfo.gameInfo.speed.goldCostModifier).toInt() // 30 is Civ V default (on standard only?)
+                val baseSellCost = when {
+                    tradePartnerDiplo.isRelationshipLevelLE(RelationshipLevel.Enemy) -> 300 // arbitrarily chosen
+                    tradePartnerDiplo.isRelationshipLevelLE(RelationshipLevel.Competitor) -> 60
+                    else -> 30 // 30 is Civ V default (on standard only?)
+                }
+                return (baseSellCost * civInfo.gameInfo.speed.goldCostModifier).toInt()
             }
             TradeOfferType.Gold -> return offer.amount
             TradeOfferType.Gold_Per_Turn -> return offer.amount * offer.duration * 4/5
